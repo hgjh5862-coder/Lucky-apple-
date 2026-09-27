@@ -3748,4 +3748,204 @@ body{overscroll-behavior-y:auto!important}
     if (!document.hidden) refresh();
   });
 })();
+  <script>
+(function(){
+  'use strict';
+
+  // ============================================
+  //  FORTUNE WHEEL - Watch Ad to Spin
+  // ============================================
+  const SMARTLINK = 'https://www.profitableratecpmnetwork.com/ui0j3pra?key=d399235ded04378cd859207920326c81';
+  const AD_DURATION = 15000;      // 15 ثانية للإعلان
+  const DAILY_LIMIT = 10;         // 10 لفات في اليوم
+  const STORAGE_KEY = 'lucky_wheel_daily_v1';
+
+  const $ = (id) => document.getElementById(id);
+  const today = () => {
+    const d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+  };
+
+  function loadData(){
+    try {
+      const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      if (d.day !== today()) return { day: today(), spins: 0 };
+      return { day: d.day, spins: Number(d.spins) || 0 };
+    } catch(e){ return { day: today(), spins: 0 }; }
+  }
+  function saveData(d){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch(e){}
+  }
+
+  // ============================================
+  //  شريط العدّاد (زي بتاع الإعلانات)
+  // ============================================
+  function showTopBar(seconds, label){
+    let ov = $('adsOverlay');
+    if (!ov){
+      ov = document.createElement('div');
+      ov.id = 'adsOverlay';
+      ov.style.cssText = 'position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,rgba(10,20,15,.97),rgba(30,50,35,.97));color:#fff;padding:14px 16px;z-index:2147483647;text-align:center;font:700 14px Cairo,sans-serif;border-bottom:2px solid #ffd96d;box-shadow:0 8px 30px rgba(0,0,0,.6);transform:translateY(-100%);transition:transform .3s ease;';
+      ov.innerHTML =
+        '<div style="display:flex;align-items:center;justify-content:center;gap:12px;">' +
+          '<span style="font-size:20px;">📺</span>' +
+          '<span id="adsOvText">جاري عرض الإعلان...</span>' +
+          '<span id="adsOvTimer" style="display:inline-flex;align-items:center;justify-content:center;min-width:42px;height:42px;background:#ffd96d;color:#2a1900;border-radius:50%;font:900 18px Cairo,sans-serif;">15</span>' +
+        '</div>' +
+        '<div style="margin-top:6px;font-size:11px;color:#ffb3b3;font-weight:600;">⚠️ الرجاء عدم إغلاق الإعلان حتى انتهاء العدّاد</div>' +
+        '<div style="margin-top:8px;height:6px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden;"><div id="adsOvBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffd96d,#e7a928);transition:width .2s;"></div></div>';
+      document.body.appendChild(ov);
+    }
+    const txt = $('adsOvText'), timer = $('adsOvTimer'), bar = $('adsOvBar');
+    if (label) txt.textContent = label;
+    ov.style.transform = 'translateY(0)';
+    let left = seconds;
+    timer.textContent = left;
+    bar.style.width = '0%';
+    const tick = setInterval(function(){
+      left--;
+      if (left < 0) left = 0;
+      timer.textContent = left;
+      bar.style.width = ((seconds - left) / seconds * 100) + '%';
+    }, 1000);
+    return tick;
+  }
+  function hideTopBar(){
+    const ov = $('adsOverlay');
+    if (ov) ov.style.transform = 'translateY(-100%)';
+  }
+
+  function openAd(){
+    const w = window.open(SMARTLINK, '_blank');
+    if (!w) window.location.href = SMARTLINK;
+  }
+
+  // ============================================
+  //  اعتراض زرار لف العجلة
+  // ============================================
+  let spinning = false;
+
+  function hookWheel(){
+    const spinBtn = $('fortuneSpinBtn');
+    if (!spinBtn || spinBtn.__wheelHooked) return;
+    spinBtn.__wheelHooked = true;
+
+    // نستبدل الزرار بنسخة جديدة
+    const clone = spinBtn.cloneNode(true);
+    spinBtn.parentNode.replaceChild(clone, spinBtn);
+    clone.id = 'fortuneSpinBtn';
+
+    // نحدث النص
+    const d = loadData();
+    const left = Math.max(0, DAILY_LIMIT - d.spins);
+
+    clone.textContent = left > 0
+      ? '📺 شاهد إعلان للحصول على لفة (' + left + ' متبقية)'
+      : '🚫 خلصت لفات النهاردة - ارجع بكرة';
+    clone.disabled = left <= 0;
+
+    clone.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (spinning) return;
+      if (loadData().spins >= DAILY_LIMIT) return;
+
+      spinning = true;
+      clone.disabled = true;
+      clone.textContent = '⏳ جاري فتح الإعلان...';
+
+      showTopBar(15, '🎡 إعلان لفة العجلة');
+      openAd();
+
+      setTimeout(function(){
+        hideTopBar();
+        // نزود العدّاد
+        const cur = loadData();
+        cur.spins = Math.min(DAILY_LIMIT, cur.spins + 1);
+        saveData(cur);
+
+        // نشغّل اللفة الأصلية
+        spinning = false;
+        const originalSpin = window.__originalWheelSpin;
+        if (typeof originalSpin === 'function') {
+          try { originalSpin(); } catch(err){}
+        }
+
+        // نحدّث النص
+        const nl = Math.max(0, DAILY_LIMIT - cur.spins);
+        clone.textContent = nl > 0
+          ? '📺 شاهد إعلان للحصول على لفة (' + nl + ' متبقية)'
+          : '🚫 خلصت لفات النهاردة - ارجع بكرة';
+        clone.disabled = nl <= 0;
+
+        // نحدّث المعلومات في النافذة
+        const res = $('fortuneWheelResult');
+        if (res) res.textContent = '🎯 متبقي ' + nl + ' لفة النهاردة';
+      }, AD_DURATION);
+    });
+  }
+
+  // ============================================
+  //  نحفظ دالة اللف الأصلية قبل ما نلغي سلوك الزرار
+  // ============================================
+  function captureOriginalSpin(){
+    // الكود الأصلي مربوط بـ addEventListener على الزرار القديم
+    // فمش هنقدر نوصله، بس اللعبة فيها دالة spinWheel داخلية.
+    // بنخلي اللعبة تشتغل طبيعي بعد ما نضيف إعلان.
+    // الحل: نعمل simulation على الضغط بعد اللفة
+    const wheel = $('fortuneWheel');
+    if (!wheel) return;
+
+    // نحفظ دالة rotate العجلة اللي الكود الأصلي بيعملها
+    window.__originalWheelSpin = function(){
+      // الكود الأصلي بيعمل rotate بزاوية عشوائية
+      const REWARDS = [25,50,100,10,250,75,150,40];
+      const index = Math.floor(Math.random() * REWARDS.length);
+      const reward = REWARDS[index];
+      const turns = 6 + Math.floor(Math.random() * 3);
+      const target = 360 - index * 45 - 22.5;
+      wheel.style.transform = 'rotate(' + (turns * 360 + target) + 'deg)';
+
+      setTimeout(function(){
+        try {
+          if (window.__game && window.__game.state){
+            window.__game.state.balance = Math.floor(window.__game.state.balance || 0) + reward;
+            if (window.__game.update) window.__game.update();
+            if (window.__game.saveAll) window.__game.saveAll();
+          }
+        } catch(err){}
+        const res = $('fortuneWheelResult');
+        if (res) res.textContent = '🎉 مبروك! كسبت ' + reward + ' 🪙';
+        if (window.__audio && window.__audio.coin) window.__audio.coin();
+      }, 4700);
+    };
+  }
+
+  // ============================================
+  //  Boot
+  // ============================================
+  function refresh(){
+    captureOriginalSpin();
+    hookWheel();
+
+    // نحدّث نتيجة العجلة
+    const res = $('fortuneWheelResult');
+    if (res){
+      const d = loadData();
+      const left = Math.max(0, DAILY_LIMIT - d.spins);
+      res.textContent = '🎯 متبقي ' + left + ' لفة النهاردة (كل لفة = إعلان)';
+    }
+  }
+
+  function boot(){
+    refresh();
+    setInterval(refresh, 1500);
+  }
+
+  if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', boot);
+  else
+    boot();
+})();
+</script>
   </script>
