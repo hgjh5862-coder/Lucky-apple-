@@ -3,19 +3,34 @@
   const REWARD = 20;
   const WAIT_SECONDS = 15;
 
-  function isRewardable(){
-    // لا تعطي مكافأة لخانات الإعلانات نفسها
-    return true;
-  }
+  // 1) نظهر الأزرار المخفية بالـ CSS
+  const style = document.createElement('style');
+  style.textContent = `
+    .daily-ads-panel,
+    .ad-recover,
+    .fortune-ad-btn,
+    .ad-slot,
+    body.in-game .ad-recover,
+    body.in-game .ad-slot,
+    body.in-game .daily-ads-panel {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      max-height: none !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+    .ad-recover.show { display: block !important; }
+  `;
+  document.head.appendChild(style);
 
+  // 2) دالة فتح الرابط الذكي
   function openSmartlink(){
     const w = window.open(SMARTLINK, '_blank');
-    if (!w) {
-      // لو المتصفح منع النافذة الجديدة، افتح في نفس الصفحة
-      window.location.href = SMARTLINK;
-    }
+    if (!w) window.location.href = SMARTLINK;
   }
 
+  // 3) دالة إعطاء المكافأة
   function giveReward(){
     try {
       if (window.__game && window.__game.state) {
@@ -27,73 +42,74 @@
     } catch(e) {}
   }
 
-  function hookAdButton(){
-    // نستبدل سلوك زر "شاهد إعلان" القديم
-    const oldBtn = document.getElementById('adBtn');
-    if (oldBtn) {
-      const newBtn = oldBtn.cloneNode(true);
-      oldBtn.parentNode.replaceChild(newBtn, oldBtn);
-      newBtn.id = 'adBtn';
-      newBtn.disabled = false;
-      newBtn.textContent = '📺 شاهد إعلان +20 🪙';
-      newBtn.addEventListener('click', function(){
-        newBtn.disabled = true;
-        newBtn.textContent = '⏳ جاري فتح الإعلان...';
+  // 4) ربط الأزرار
+  function hookButtons(){
+    // زرار "شاهد إعلان" في قسم الإعلانات اليومية
+    const adsBtn = document.getElementById('watchAdBtn');
+    if (adsBtn && !adsBtn.__adsHooked) {
+      adsBtn.__adsHooked = true;
+      adsBtn.disabled = false;
+      adsBtn.textContent = '🎁 اضغط هنا وانتظر 15 ثانية +20 🪙';
+      adsBtn.onclick = null;
+      adsBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        adsBtn.disabled = true;
+        adsBtn.textContent = '⏳ جاري فتح الإعلان...';
         openSmartlink();
         setTimeout(function(){
           giveReward();
-          newBtn.textContent = '✅ تم! شكراً لمشاهدتك +20 🪙';
+          adsBtn.textContent = '✅ تم! +20 🪙';
           setTimeout(function(){
-            newBtn.textContent = '📺 شاهد إعلان +20 🪙';
-            newBtn.disabled = false;
+            adsBtn.textContent = '🎁 اضغط هنا وانتظر 15 ثانية +20 🪙';
+            adsBtn.disabled = false;
           }, 3000);
         }, WAIT_SECONDS * 1000);
-      });
+      }, true);
     }
 
-    // برضه نصلح زر الإعلان اللي في "daily-ads-panel"
-    const otherBtn = document.getElementById('watchAdBtn');
-    if (otherBtn) {
-      const nb = otherBtn.cloneNode(true);
-      otherBtn.parentNode.replaceChild(nb, otherBtn);
-      nb.id = 'watchAdBtn';
-      nb.disabled = false;
-      nb.textContent = '🎁 شاهد إعلان +20 🪙';
-      nb.addEventListener('click', function(){
-        nb.disabled = true;
-        nb.textContent = '⏳ جاري فتح الإعلان...';
+    // زرار "شاهد إعلان واحصل على عملات" (اللي بعد الخسارة)
+    const adBtn = document.getElementById('adBtn');
+    if (adBtn && !adBtn.__adsHooked) {
+      adBtn.__adsHooked = true;
+      adBtn.disabled = false;
+      adBtn.textContent = '📺 شاهد إعلان +20 🪙';
+      adBtn.onclick = null;
+      adBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        adBtn.disabled = true;
+        adBtn.textContent = '⏳ جاري فتح الإعلان...';
         openSmartlink();
         setTimeout(function(){
           giveReward();
-          nb.textContent = '✅ تم! +20 🪙';
+          adBtn.textContent = '✅ تم! +20 🪙';
           setTimeout(function(){
-            nb.textContent = '🎁 شاهد إعلان +20 🪙';
-            nb.disabled = false;
+            adBtn.textContent = '📺 شاهد إعلان +20 🪙';
+            adBtn.disabled = false;
           }, 3000);
         }, WAIT_SECONDS * 1000);
-      });
+      }, true);
     }
+
+    // نظهر الأزرار
+    const rec = document.getElementById('adRecover');
+    if (rec) rec.classList.add('show');
+    const panel = document.getElementById('dailyAdsPanel');
+    if (panel) panel.style.display = 'block';
   }
 
-  // نشغّل الكود لما الصفحة تخلص تحميل
+  // 5) نشغّل الكود
+  function boot(){
+    hookButtons();
+    setInterval(hookButtons, 1500);
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', hookAdButton);
+    document.addEventListener('DOMContentLoaded', boot);
   } else {
-    hookAdButton();
+    boot();
   }
 
-  // في حالة إن الأزرار ظهرت متأخر، نراقب الصفحة
-  const watcher = setInterval(function(){
-    const a = document.getElementById('adBtn');
-    const b = document.getElementById('watchAdBtn');
-    if ((a && !a.__adsHooked) || (b && !b.__adsHooked)) {
-      if (a) a.__adsHooked = true;
-      if (b) b.__adsHooked = true;
-      hookAdButton();
-    }
-  }, 2000);
-
-  setTimeout(function(){ clearInterval(watcher); }, 60000);
-
-  console.log('✅ Ads system ready.');
+  console.log('✅ Ads system ready with visible buttons.');
 })();
