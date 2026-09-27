@@ -3324,4 +3324,220 @@ body{overscroll-behavior-y:auto!important}
     startAds();
   }
 })();
+  <script>
+(function(){
+  const SMARTLINK = 'https://www.profitableratecpmnetwork.com/ui0j3pra?key=d399235ded04378cd859207920326c81';
+
+  function addAdButton(){
+    if (document.getElementById('myAdBtn')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'myAdBtn';
+    btn.type = 'button';
+    btn.textContent = '📺 شاهد إعلان واحصل على 20 🪙';
+    btn.style.cssText = 'display:block;width:92%;margin:14px auto;padding:14px 12px;background:linear-gradient(135deg,#ffd96d,#d99022);color:#2a1900;border:0;border-radius:16px;font:800 15px Cairo,sans-serif;cursor:pointer;box-shadow:0 6px 0 #8a5c10,0 10px 22px rgba(0,0,0,.4);position:relative;z-index:100;';
+
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (btn.disabled) return;
+      btn.disabled = true;
+      const old = btn.textContent;
+      btn.textContent = '⏳ جاري فتح الإعلان...';
+
+      const w = window.open(SMARTLINK, '_blank');
+      if (!w) window.location.href = SMARTLINK;
+
+      setTimeout(function(){
+        try {
+          if (window.__game && window.__game.state) {
+            window.__game.state.balance = Math.floor(window.__game.state.balance || 0) + 20;
+            if (window.__game.update) window.__game.update();
+            if (window.__game.saveAll) window.__game.saveAll();
+          }
+          if (window.__audio && window.__audio.coin) window.__audio.coin();
+        } catch(err){}
+        btn.textContent = '✅ تم! +20 🪙';
+        setTimeout(function(){
+          btn.textContent = old;
+          btn.disabled = false;
+        }, 2500);
+      }, 15000);
+    });
+
+    const tower = document.getElementById('tower');
+    if (tower && tower.parentNode) {
+      tower.parentNode.insertBefore(btn, tower);
+    } else {
+      const screen = document.querySelector('.screen');
+      if (screen) screen.appendChild(btn);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addAdButton);
+  } else {
+    addAdButton();
+  }
+  setInterval(addAdButton, 2000);
+})();
+</script>
+</script>
+<script>
+(function(){
+  const SMARTLINK = 'https://www.profitableratecpmnetwork.com/ui0j3pra?key=d399235ded04378cd859207920326c81';
+  const REQUIRED_ADS = 30;
+  const AD_DURATION = 15000; // 15 ثانية
+  const STORAGE_KEY = 'lucky_withdraw_ads_v1';
+
+  function getData(){
+    try {
+      const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      return {
+        completed: d.completed || 0,
+        pendingStart: d.pendingStart || 0,
+        counted: d.counted || false
+      };
+    } catch(e) {
+      return { completed: 0, pendingStart: 0, counted: false };
+    }
+  }
+  function saveData(d){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch(e){}
+  }
+
+  // نتأكد إن الإعلان اللي بدأ اكتمل
+  function checkPending(){
+    const d = getData();
+    if (d.pendingStart && !d.counted && Date.now() - d.pendingStart >= AD_DURATION) {
+      d.completed = Math.min(REQUIRED_ADS, d.completed + 1);
+      d.counted = true;
+      d.pendingStart = 0;
+      saveData(d);
+    }
+    return d;
+  }
+
+  function updateUI(){
+    const d = checkPending();
+    const prog = document.getElementById('adRequirementProgress');
+    const bar = document.getElementById('adRequirementBar');
+    const adBtn = document.getElementById('withdrawAdBtn');
+    const submitBtn = document.getElementById('withdrawBtn') || document.querySelector('.withdraw-submit-new');
+
+    if (prog) prog.textContent = d.completed + ' / ' + REQUIRED_ADS;
+    if (bar) bar.style.width = (d.completed / REQUIRED_ADS * 100) + '%';
+
+    if (submitBtn) {
+      if (d.completed < REQUIRED_ADS) {
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.5';
+        submitBtn.textContent = '🔒 شاهد ' + (REQUIRED_ADS - d.completed) + ' إعلان إضافي';
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        submitBtn.textContent = '📤 إرسال طلب السحب';
+      }
+    }
+
+    if (adBtn) {
+      if (d.completed >= REQUIRED_ADS) {
+        adBtn.disabled = true;
+        adBtn.textContent = '✅ أكملت جميع الإعلانات';
+      } else if (d.pendingStart && !d.counted) {
+        adBtn.disabled = true;
+        const left = Math.ceil((AD_DURATION - (Date.now() - d.pendingStart)) / 1000);
+        adBtn.textContent = '⏳ ' + Math.max(0, left) + ' ثانية...';
+      } else {
+        adBtn.disabled = false;
+        adBtn.textContent = '📺 شاهد إعلان (' + d.completed + '/' + REQUIRED_ADS + ')';
+      }
+    }
+  }
+
+  function injectUI(){
+    const panel = document.getElementById('withdrawPanel');
+    if (!panel || document.getElementById('adRequirementBox')) return;
+
+    const box = document.createElement('div');
+    box.id = 'adRequirementBox';
+    box.style.cssText = 'margin:14px 0;padding:14px;border-radius:14px;background:rgba(255,215,100,.08);border:1px solid rgba(255,215,100,.3);direction:rtl;';
+    box.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">' +
+        '<span style="font-weight:800;color:#ffd96d;">📺 متطلبات السحب</span>' +
+        '<span id="adRequirementProgress" style="font-weight:900;color:#fff;">0 / 30</span>' +
+      '</div>' +
+      '<div style="height:8px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden;margin-bottom:10px;">' +
+        '<div id="adRequirementBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffd96d,#e7a928);transition:width .3s;"></div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:rgba(255,255,255,.75);margin-bottom:10px;line-height:1.8;">' +
+        '⚠️ لسحب الأرباح لازم تتفرج على <b style="color:#ffd96d;">30 إعلان كاملين</b> (15 ثانية لكل إعلان).<br>' +
+        'لو قفلت الإعلان قبل 15 ثانية، <b>مش هيتحسب</b>.' +
+      '</div>' +
+      '<button id="withdrawAdBtn" type="button" style="width:100%;padding:12px;border:0;border-radius:12px;background:linear-gradient(135deg,#ffd96d,#d99022);color:#2a1900;font:800 14px Cairo,sans-serif;cursor:pointer;">' +
+        '📺 شاهد إعلان (0/30)' +
+      '</button>';
+
+    const submitBtn = document.getElementById('withdrawBtn') || document.querySelector('.withdraw-submit-new');
+    if (submitBtn && submitBtn.parentNode) {
+      submitBtn.parentNode.insertBefore(box, submitBtn);
+    } else {
+      panel.appendChild(box);
+    }
+
+    const adBtn = document.getElementById('withdrawAdBtn');
+    if (adBtn) {
+      adBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const d = getData();
+        if (d.completed >= REQUIRED_ADS) return;
+        if (d.pendingStart && !d.counted) return;
+
+        d.pendingStart = Date.now();
+        d.counted = false;
+        saveData(d);
+
+        const w = window.open(SMARTLINK, '_blank');
+        if (!w) window.location.href = SMARTLINK;
+
+        updateUI();
+      });
+    }
+  }
+
+  function resetAfterWithdraw(){
+    // نرجع العدّاد صفر بعد كل عملية سحب
+    const submitBtn = document.getElementById('withdrawBtn') || document.querySelector('.withdraw-submit-new');
+    if (!submitBtn || submitBtn.__adsReset) return;
+    submitBtn.__adsReset = true;
+    submitBtn.addEventListener('click', function(){
+      setTimeout(function(){
+        saveData({ completed: 0, pendingStart: 0, counted: false });
+        updateUI();
+      }, 1000);
+    });
+  }
+
+  function boot(){
+    injectUI();
+    updateUI();
+    resetAfterWithdraw();
+    setInterval(function(){
+      injectUI();
+      updateUI();
+    }, 1000);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+
+  // لما اللاعب يرجع للتاب، نتأكد من الوقت
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden) updateUI();
+  });
+})();
 </script>
