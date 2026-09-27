@@ -3273,5 +3273,55 @@ body{overscroll-behavior-y:auto!important}
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ready); else ready();
 })();
 </script>
-<script src="supabase.js"></script>
-<script src="ads.js"></script>
+<script>
+(function(){
+  const SMARTLINK = 'https://www.profitableratecpmnetwork.com/ui0j3pra?key=d399235ded04378cd859207920326c81';
+
+  function badge(t){
+    const b = document.createElement('div');
+    b.style.cssText = 'position:fixed;bottom:6px;right:6px;background:#0a0;color:#fff;padding:5px 9px;border-radius:8px;font:11px Cairo,sans-serif;z-index:99999999;';
+    b.textContent = t;
+    document.body.appendChild(b);
+  }
+
+  function removeAdPanel(){
+    const p = document.getElementById('dailyAdsPanel');
+    if (p) p.remove();
+  }
+
+  let lastAd = 0;
+  function fireAd(){
+    if (Date.now() - lastAd < 30000) return;
+    lastAd = Date.now();
+    const w = window.open(SMARTLINK, '_blank');
+    if (!w) window.location.href = SMARTLINK;
+  }
+
+  function startAds(){
+    badge('ads ON');
+    removeAdPanel();
+    setInterval(removeAdPanel, 500);
+
+    let lastMsg = '';
+    setInterval(function(){
+      const msg = document.getElementById('message');
+      if (!msg) return;
+      const t = (msg.textContent || '').trim();
+      if (t === lastMsg) return;
+      lastMsg = t;
+      if (t.indexOf('قنبلة') !== -1 || t.indexOf('خسرت') !== -1) {
+        setTimeout(fireAd, 1500);
+      }
+    }, 500);
+
+    const rec = document.getElementById('adRecover');
+    if (rec) rec.classList.add('show');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startAds);
+  } else {
+    startAds();
+  }
+})();
+</script>
