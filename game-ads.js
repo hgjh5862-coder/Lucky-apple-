@@ -4,26 +4,25 @@
   const REWARD_COINS = 20;
   const WITHDRAW_REQ = 30;
   const WHEEL_DAILY = 10;
-  const AUTO_AD_COOLDOWN = 10000; // 10 ثواني بين كل إعلانين تلقائيين
-  const STORAGE = { w: 'lucky_wd_v4', wh: 'lucky_wh_v4', rounds: 'lucky_rounds_v1' };
+  const STORAGE = { w: 'lucky_wd_v5', wh: 'lucky_wh_v5' };
 
   const $ = (id) => document.getElementById(id);
   const now = () => Date.now();
   const today = () => { const d = new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); };
 
-  // ============ علامة التشغيل ============
+  // علامة
   const badge = document.createElement('div');
   badge.style.cssText = 'position:fixed;bottom:6px;right:6px;background:green;color:#fff;padding:5px 9px;border-radius:8px;font:11px Cairo,sans-serif;z-index:99999999;pointer-events:none;';
   badge.textContent = 'ads ON';
   if (document.body) document.body.appendChild(badge);
 
-  // ============ شريط العدّاد ============
+  // شريط العدّاد
   function topBar(sec, label){
     let ov = $('adsTop');
     if (!ov){
       ov = document.createElement('div');
       ov.id = 'adsTop';
-      ov.style.cssText = 'position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,#0a1410,#1a3220);color:#fff;padding:14px;z-index:2147483647;text-align:center;font:700 14px Cairo,sans-serif;border-bottom:2px solid #ffd96d;transform:translateY(-100%);transition:transform .3s;pointer-events:none;';
+      ov.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#0a1410;color:#fff;padding:14px;z-index:2147483647;text-align:center;font:700 14px Cairo,sans-serif;border-bottom:2px solid #ffd96d;transform:translateY(-100%);transition:transform .3s;pointer-events:none;';
       ov.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:12px;"><span style="font-size:20px;">📺</span><span id="adsTxt">جاري عرض الإعلان...</span><span id="adsNum" style="display:inline-flex;align-items:center;justify-content:center;min-width:42px;height:42px;background:#ffd96d;color:#2a1900;border-radius:50%;font:900 18px Cairo,sans-serif;">15</span></div><div style="margin-top:6px;font-size:11px;color:#ffb3b3;">⚠️ لا تغلق الإعلان حتى انتهاء العدّاد</div><div style="margin-top:8px;height:6px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden;"><div id="adsBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffd96d,#e7a928);transition:width .2s;"></div></div>';
       document.body.appendChild(ov);
     }
@@ -39,13 +38,14 @@
       $('adsBar').style.width = ((sec-left)/sec*100)+'%';
       if (left <= 0) clearInterval(tk);
     }, 1000);
+    return tk;
   }
   function hideBar(){
     const ov = $('adsTop');
     if (ov) ov.style.transform = 'translateY(-100%)';
   }
 
-  // ============ فتح الإعلان ============
+  // فتح الإعلان
   function openAd(){
     if (window.WebToApk && window.WebToApk.openExternal) return window.WebToApk.openExternal(SMARTLINK);
     if (window.AppCreator24 && window.AppCreator24.openExternal) return window.AppCreator24.openExternal(SMARTLINK);
@@ -53,17 +53,37 @@
     if (!w) window.location.href = SMARTLINK;
   }
 
-  // ============ إعلان تلقائي مع كولداون ============
-  let lastAuto = 0;
-  function autoAd(label){
-    if (now() - lastAuto < AUTO_AD_COOLDOWN) return;
-    lastAuto = now();
+  // ============ نظام الجلسة (التتبع الحقيقي) ============
+  let currentSession = null;
+
+  function startAdSession(label, onSuccess, onFail){
+    currentSession = {
+      start: now(),
+      onSuccess: onSuccess,
+      onFail: onFail
+    };
     openAd();
-    topBar(AD_DURATION/1000, label);
-    setTimeout(hideBar, AD_DURATION);
+    topBar(15, label);
   }
 
-  // ============ مكافأة ============
+  // لما اللاعب يرجع للعبة، نحسب الوقت الفعلي
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) return; // خرج من اللعبة
+    if (!currentSession) return;
+
+    const elapsed = now() - currentSession.start;
+    const session = currentSession;
+    currentSession = null;
+
+    if (elapsed >= AD_DURATION - 500){
+      // كمل الـ 15 ثانية
+      session.onSuccess();
+    } else {
+      // قفل بدري
+      session.onFail(Math.round(elapsed / 1000));
+    }
+  });
+
   function giveCoins(n){
     try {
       if (window.__game && window.__game.state){
@@ -75,7 +95,7 @@
     } catch(e){}
   }
 
-  // ============ 1) زرار "شاهد إعلان +20" ============
+  // ============ 1) زرار +20 ============
   function addRewardBtn(){
     if ($('myRewardBtn')) return;
     const btn = document.createElement('button');
@@ -87,22 +107,50 @@
       btn.disabled = true;
       const old = btn.textContent;
       btn.textContent = '⏳ جاري فتح الإعلان...';
-      openAd();
-      topBar(15, '🎁 إعلان مكافأة +20 🪙');
-      setTimeout(function(){
-        hideBar();
-        giveCoins(20);
-        btn.textContent = '✅ تم! +20 🪙';
-        setTimeout(function(){ btn.textContent = old; btn.disabled = false; }, 2500);
-      }, AD_DURATION);
+
+      startAdSession(
+        '🎁 إعلان مكافأة +20 🪙',
+        function(){
+          // نجح
+          hideBar();
+          giveCoins(20);
+          btn.textContent = '✅ تم! +20 🪙';
+          setTimeout(function(){ btn.textContent = old; btn.disabled = false; }, 2500);
+        },
+        function(sec){
+          // فشل
+          hideBar();
+          btn.textContent = '❌ قفلت الإعلان بدري (' + sec + 'ث)';
+          setTimeout(function(){ btn.textContent = old; btn.disabled = false; }, 3000);
+        }
+      );
     };
     const tower = $('tower');
     if (tower && tower.parentNode) tower.parentNode.insertBefore(btn, tower);
   }
 
-  // ============ 2) مراقبة الفوز والخسارة + عداد الجولات ============
-  let roundCount = 0;
-  try { roundCount = Number(localStorage.getItem(STORAGE.rounds) || 0); } catch(e){}
+  // ============ 2) إعلان بعد الخسارة ============
+  let lastLossAd = 0;
+  let lossBusy = false;
+
+  function fireLossAd(){
+    if (lossBusy) return;
+    if (now() - lastLossAd < 20000) return;
+    lossBusy = true;
+    lastLossAd = now();
+
+    startAdSession(
+      '🎯 إعلان بعد الخسارة',
+      function(){
+        hideBar();
+        lossBusy = false;
+      },
+      function(){
+        hideBar();
+        lossBusy = false;
+      }
+    );
+  }
 
   function watchMessages(){
     const msg = $('message');
@@ -111,65 +159,17 @@
     if (t === watchMessages.last) return;
     watchMessages.last = t;
 
-    // خسارة
     if (t.indexOf('قنبلة') !== -1 || t.indexOf('خسرت') !== -1){
-      roundCount++;
-      try { localStorage.setItem(STORAGE.rounds, String(roundCount)); } catch(e){}
-      setTimeout(function(){ autoAd('🎯 إعلان بعد الخسارة'); }, 1200);
-      return;
-    }
-
-    // فوز
-    if (t.indexOf('جمعت') !== -1 || t.indexOf('القمة') !== -1 || t.indexOf('مبروك') !== -1){
-      roundCount++;
-      try { localStorage.setItem(STORAGE.rounds, String(roundCount)); } catch(e){}
-      setTimeout(function(){ autoAd('🏆 إعلان بعد الفوز'); }, 1500);
-
-      // كل 3 جولات → إعلان إضافي
-      if (roundCount % 3 === 0){
-        setTimeout(function(){ autoAd('🎮 إعلان إضافي كل 3 جولات'); }, 4000);
-      }
+      setTimeout(fireLossAd, 1500);
     }
   }
 
-  // ============ 3) إعلان لما اللاعب يدخل اللعبة ============
-  function firstOpenAd(){
-    if (sessionStorage.getItem('firstAdShown')) return;
-    const splash = $('splash');
-    if (!splash) return;
-
-    const obs = new MutationObserver(function(){
-      if (splash.classList.contains('hidden')){
-        obs.disconnect();
-        sessionStorage.setItem('firstAdShown', '1');
-        setTimeout(function(){ autoAd('👋 إعلان الترحيب'); }, 2500);
-      }
-    });
-    obs.observe(splash, { attributes: true, attributeFilter: ['class'] });
-  }
-
-  // ============ 4) إعلان عند الضغط على "اجمع العملات" ============
-  function hookCollect(){
-    const btn = $('collectBtn');
-    if (!btn || btn.__adsHooked) return;
-    btn.__adsHooked = true;
-    const orig = btn.onclick;
-    btn.addEventListener('click', function(){
-      setTimeout(function(){ autoAd('💰 إعلان عند جمع العملات'); }, 2000);
-    });
-  }
-
-  // ============ 5) السحب (30 إعلان) ============
+  // ============ 3) السحب (30 إعلان) ============
   function loadW(){
     try { const d = JSON.parse(localStorage.getItem(STORAGE.w) || '{}'); return { c: Number(d.c)||0, p: Number(d.p)||0, k: !!d.k }; }
     catch(e){ return { c:0, p:0, k:false }; }
   }
   function saveW(d){ try { localStorage.setItem(STORAGE.w, JSON.stringify(d)); } catch(e){} }
-  function tickW(){
-    const d = loadW();
-    if (d.p && !d.k && now() - d.p >= AD_DURATION){ d.c = Math.min(WITHDRAW_REQ, d.c+1); d.k = true; d.p = 0; saveW(d); }
-    return d;
-  }
 
   function addWithdrawBox(){
     const panel = $('withdrawPanel');
@@ -181,32 +181,65 @@
     const submit = $('withdrawBtn') || document.querySelector('.withdraw-submit-new');
     if (submit && submit.parentNode) submit.parentNode.insertBefore(box, submit);
     else panel.appendChild(box);
+
     $('wdBtn').onclick = function(e){
       e.preventDefault(); e.stopImmediatePropagation();
       const d = loadW();
       if (d.c >= WITHDRAW_REQ) return;
-      if (d.p && !d.k) return;
-      d.p = now(); d.k = false; saveW(d);
-      openAd();
-      topBar(15, '📺 إعلان للسحب ('+d.c+'/'+WITHDRAW_REQ+')');
-      updateWdUI();
+      if (d.p) return;
+
+      startAdSession(
+        '📺 إعلان للسحب (' + d.c + '/' + WITHDRAW_REQ + ')',
+        function(){
+          // نجح — نحسب الإعلان
+          hideBar();
+          const cur = loadW();
+          cur.c = Math.min(WITHDRAW_REQ, cur.c + 1);
+          cur.p = 0;
+          saveW(cur);
+          updateWdUI();
+        },
+        function(sec){
+          // فشل
+          hideBar();
+          const cur = loadW();
+          cur.p = 0;
+          saveW(cur);
+          updateWdUI();
+          const res = $('wdCount');
+        }
+      );
     };
   }
 
   function updateWdUI(){
-    const d = tickW();
+    const d = loadW();
     const c = $('wdCount'), bar = $('wdBar'), ab = $('wdBtn');
     const submit = $('withdrawBtn') || document.querySelector('.withdraw-submit-new');
-    if (c) c.textContent = d.c+'/'+WITHDRAW_REQ;
-    if (bar) bar.style.width = (d.c/WITHDRAW_REQ*100)+'%';
+
+    if (c) c.textContent = d.c + '/' + WITHDRAW_REQ;
+    if (bar) bar.style.width = (d.c / WITHDRAW_REQ * 100) + '%';
+
     if (submit){
-      if (d.c < WITHDRAW_REQ){ submit.disabled = true; submit.style.opacity = '.5'; submit.textContent = '🔒 شاهد '+(WITHDRAW_REQ-d.c)+' إعلان إضافي'; }
-      else { submit.disabled = false; submit.style.opacity = '1'; submit.textContent = '📤 إرسال طلب السحب'; }
+      if (d.c < WITHDRAW_REQ){
+        submit.disabled = true;
+        submit.style.opacity = '.5';
+        submit.textContent = '🔒 شاهد ' + (WITHDRAW_REQ - d.c) + ' إعلان إضافي';
+      } else {
+        submit.disabled = false;
+        submit.style.opacity = '1';
+        submit.textContent = '📤 إرسال طلب السحب';
+      }
     }
+
     if (ab){
-      if (d.c >= WITHDRAW_REQ){ ab.disabled = true; ab.textContent = '✅ أكملت جميع الإعلانات'; }
-      else if (d.p && !d.k){ ab.disabled = true; const l = Math.max(0, Math.ceil((AD_DURATION-(now()-d.p))/1000)); ab.textContent = '⏳ '+l+' ثانية...'; }
-      else { ab.disabled = false; ab.textContent = '📺 شاهد إعلان للسحب ('+d.c+'/'+WITHDRAW_REQ+')'; }
+      if (d.c >= WITHDRAW_REQ){
+        ab.disabled = true;
+        ab.textContent = '✅ أكملت جميع الإعلانات';
+      } else {
+        ab.disabled = false;
+        ab.textContent = '📺 شاهد إعلان للسحب (' + d.c + '/' + WITHDRAW_REQ + ')';
+      }
     }
   }
 
@@ -215,11 +248,14 @@
     if (!submit || submit.__r) return;
     submit.__r = true;
     submit.addEventListener('click', function(){
-      setTimeout(function(){ saveW({ c:0, p:0, k:false }); updateWdUI(); }, 800);
+      setTimeout(function(){
+        saveW({ c:0, p:0, k:false });
+        updateWdUI();
+      }, 800);
     });
   }
 
-  // ============ 6) عجلة الحظ (10 لفات) ============
+  // ============ 4) عجلة الحظ ============
   function loadWh(){
     try { const d = JSON.parse(localStorage.getItem(STORAGE.wh) || '{}'); if (d.day !== today()) return { day: today(), s: 0 }; return { day: d.day, s: Number(d.s)||0 }; }
     catch(e){ return { day: today(), s: 0 }; }
@@ -234,31 +270,46 @@
     const clone = old.cloneNode(true);
     old.parentNode.replaceChild(clone, old);
     clone.id = 'fortuneSpinBtn';
+
     const d = loadWh();
     const left = Math.max(0, WHEEL_DAILY - d.s);
-    clone.textContent = left > 0 ? '📺 شاهد إعلان للحصول على لفة ('+left+' متبقية)' : '🚫 خلصت لفات النهاردة - ارجع بكرة';
+    clone.textContent = left > 0 ? '📺 شاهد إعلان للحصول على لفة (' + left + ' متبقية)' : '🚫 خلصت لفات النهاردة - ارجع بكرة';
     clone.disabled = left <= 0;
+
     clone.addEventListener('click', function(e){
       e.preventDefault(); e.stopImmediatePropagation();
       if (whBusy) return;
       if (loadWh().s >= WHEEL_DAILY) return;
       whBusy = true; clone.disabled = true;
       clone.textContent = '⏳ جاري فتح الإعلان...';
-      openAd();
-      topBar(15, '🎡 إعلان لفة العجلة');
-      setTimeout(function(){
-        hideBar();
-        const cur = loadWh();
-        cur.s = Math.min(WHEEL_DAILY, cur.s+1);
-        saveWh(cur);
-        spinWheel();
-        const nl = Math.max(0, WHEEL_DAILY - cur.s);
-        clone.textContent = nl > 0 ? '📺 شاهد إعلان للحصول على لفة ('+nl+' متبقية)' : '🚫 خلصت لفات النهاردة - ارجع بكرة';
-        clone.disabled = nl <= 0;
-        whBusy = false;
-        const res = $('fortuneWheelResult');
-        if (res) res.textContent = '🎯 متبقي '+nl+' لفة النهاردة';
-      }, AD_DURATION);
+
+      startAdSession(
+        '🎡 إعلان لفة العجلة',
+        function(){
+          hideBar();
+          const cur = loadWh();
+          cur.s = Math.min(WHEEL_DAILY, cur.s + 1);
+          saveWh(cur);
+          spinWheel();
+          const nl = Math.max(0, WHEEL_DAILY - cur.s);
+          clone.textContent = nl > 0 ? '📺 شاهد إعلان للحصول على لفة (' + nl + ' متبقية)' : '🚫 خلصت لفات النهاردة - ارجع بكرة';
+          clone.disabled = nl <= 0;
+          whBusy = false;
+          const res = $('fortuneWheelResult');
+          if (res) res.textContent = '🎯 متبقي ' + nl + ' لفة النهاردة';
+        },
+        function(sec){
+          hideBar();
+          clone.textContent = '❌ قفلت الإعلان بدري (' + sec + 'ث)';
+          whBusy = false;
+          setTimeout(function(){
+            const d2 = loadWh();
+            const nl = Math.max(0, WHEEL_DAILY - d2.s);
+            clone.textContent = nl > 0 ? '📺 شاهد إعلان للحصول على لفة (' + nl + ' متبقية)' : '🚫 خلصت لفات النهاردة - ارجع بكرة';
+            clone.disabled = nl <= 0;
+          }, 3000);
+        }
+      );
     });
   }
 
@@ -266,38 +317,35 @@
     const wheel = $('fortuneWheel');
     if (!wheel) return;
     const R = [25,50,100,10,250,75,150,40];
-    const idx = Math.floor(Math.random()*R.length);
+    const idx = Math.floor(Math.random() * R.length);
     const rw = R[idx];
-    const turns = 6 + Math.floor(Math.random()*3);
+    const turns = 6 + Math.floor(Math.random() * 3);
     const tgt = 360 - idx*45 - 22.5;
-    wheel.style.transform = 'rotate('+(turns*360+tgt)+'deg)';
+    wheel.style.transform = 'rotate(' + (turns*360 + tgt) + 'deg)';
     setTimeout(function(){
       giveCoins(rw);
       const res = $('fortuneWheelResult');
-      if (res) res.textContent = '🎉 مبروك! كسبت '+rw+' 🪙';
+      if (res) res.textContent = '🎉 مبروك! كسبت ' + rw + ' 🪙';
     }, 4700);
   }
 
-  // ============ نشيل الخانة القديمة ============
+  // ============ 5) شيل الخانة القديمة ============
   function removeOld(){
     const p = $('dailyAdsPanel');
     if (p) p.remove();
   }
 
-  // ============ تشغيل ============
   function refresh(){
     removeOld();
     addRewardBtn();
     addWithdrawBox();
     updateWdUI();
     hookWheel();
-    hookCollect();
     resetWdAfterSubmit();
   }
 
   function boot(){
     refresh();
-    firstOpenAd();
     setInterval(refresh, 1000);
     setInterval(watchMessages, 800);
   }
