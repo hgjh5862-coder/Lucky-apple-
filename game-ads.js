@@ -76,8 +76,8 @@
     if (lossBusy) return;
     if (now() - lastLossAd < LOSS_COOLDOWN) return;
     lossBusy = true; lastLossAd = now();
-    showOverlay(15, '🎯 إعلان بعد الخسارة');
     openAd();
+showOverlay(15, '🎯 إعلان بعد الخسارة');
     setTimeout(function(){ hideOverlay(); lossBusy = false; }, AD_DURATION);
   }
   function watchAdRecover(){
@@ -104,8 +104,8 @@
       rewardBusy = true; btn.disabled = true;
       const orig = btn.textContent;
       btn.textContent = '⏳ جاري فتح الإعلان...';
-      showOverlay(15, '🎁 إعلان مكافأة +20 🪙');
       openAd();
+showOverlay(15, '🎁 إعلان مكافأة +20 🪙');
       setTimeout(function(){
         hideOverlay();
         try {
@@ -145,8 +145,8 @@
       if (d.completed >= WITHDRAW_REQ) return;
       if (d.pendingStart && !d.counted) return;
       d.pendingStart = now(); d.counted = false; saveW(d);
-      showOverlay(15, '📺 إعلان للسحب (' + d.completed + '/' + WITHDRAW_REQ + ')');
       openAd();
+showOverlay(15, '📺 إعلان للسحب (' + d.completed + '/' + WITHDRAW_REQ + ')');
       updateWUI();
     });
   }
@@ -199,8 +199,8 @@
       if (loadWheel().spins >= WHEEL_DAILY) return;
       wheelBusy = true; clone.disabled = true;
       clone.textContent = '⏳ جاري فتح الإعلان...';
-      showOverlay(15, '🎡 إعلان لفة العجلة');
       openAd();
+showOverlay(15, '🎡 إعلان لفة العجلة');
       setTimeout(function(){
         hideOverlay();
         const cur = loadWheel();
