@@ -52,6 +52,8 @@
 
   // ============ Open Ad (iframe overlay) ============
   function openAd(){
+    if (window.WebToApk && window.WebToApk.openExternal) { window.WebToApk.openExternal(SMARTLINK); return; }
+if (window.AppCreator24 && window.AppCreator24.openExternal) { window.AppCreator24.openExternal(SMARTLINK); return; }
     const existing = $('adsFrameOverlay');
     if (existing) existing.remove();
     const ov = document.createElement('div');
