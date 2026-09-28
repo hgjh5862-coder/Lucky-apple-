@@ -1,28 +1,32 @@
 (function(){
   const SMARTLINK = 'https://www.profitableratecpmnetwork.com/ui0j3pra?key=d399235ded04378cd859207920326c81';
   const AD_DURATION = 15000;
-  const AD_MIN = 14500;
-  const WITHDRAW_REQ = 30;
+  const AD_MIN = 14000;
+  const COINS_PER_AD = 5;
+  const DAILY_LIMIT = 50;
+  const WITHDRAW_REQ = 50;
   const WHEEL_DAILY = 10;
-  const AUTO_COOLDOWN = 20000;
-  const STORAGE = { w: 'lucky_wd_v6', wh: 'lucky_wh_v6' };
+  const AUTO_COOLDOWN = 25000;
+  const STORAGE = { daily: 'lucky_daily_v1', withdraw: 'lucky_wd_v1', wheel: 'lucky_wh_v1' };
 
   const $ = (id) => document.getElementById(id);
   const now = () => Date.now();
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
 
+  // ============ علامة التشغيل ============
   const badge = document.createElement('div');
   badge.style.cssText = 'position:fixed;bottom:6px;right:6px;background:green;color:#fff;padding:5px 9px;border-radius:8px;font:11px Cairo,sans-serif;z-index:99999999;pointer-events:none;';
   badge.textContent = 'ads ON';
   if (document.body) document.body.appendChild(badge);
 
+  // ============ شريط العدّاد ============
   function topBar(sec, label){
     let ov = $('adsTop');
     if (!ov){
       ov = document.createElement('div');
       ov.id = 'adsTop';
       ov.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#0a1410;color:#fff;padding:14px;z-index:2147483647;text-align:center;font:700 14px Cairo,sans-serif;border-bottom:2px solid #ffd96d;transform:translateY(-100%);transition:transform .3s;pointer-events:none;';
-      ov.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:12px;"><span style="font-size:20px;">📺</span><span id="adsTxt">جاري عرض الإعلان...</span><span id="adsNum" style="display:inline-flex;align-items:center;justify-content:center;min-width:42px;height:42px;background:#ffd96d;color:#2a1900;border-radius:50%;font:900 18px Cairo,sans-serif;">15</span></div><div style="margin-top:6px;font-size:11px;color:#ffb3b3;">لا تغلق الإعلان حتى انتهاء العدّاد</div><div style="margin-top:8px;height:6px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden;"><div id="adsBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffd96d,#e7a928);transition:width .2s;"></div></div>';
+      ov.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:12px;"><span style="font-size:20px;">📺</span><span id="adsTxt">جاري عرض الإعلان...</span><span id="adsNum" style="display:inline-flex;align-items:center;justify-content:center;min-width:42px;height:42px;background:#ffd96d;color:#2a1900;border-radius:50%;font:900 18px Cairo,sans-serif;">15</span></div><div style="margin-top:6px;font-size:11px;color:#ffb3b3;">⚠️ لا تغلق الإعلان حتى انتهاء العدّاد</div><div style="margin-top:8px;height:6px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden;"><div id="adsBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffd96d,#e7a928);transition:width .2s;"></div></div>';
       document.body.appendChild(ov);
     }
     $('adsTxt').textContent = label;
@@ -45,14 +49,16 @@
     if (ov) ov.style.transform = 'translateY(-100%)';
   }
 
+  // ============ Toast ============
   function toast(msg, color){
     const t = document.createElement('div');
-    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:' + (color || '#0a1410') + ';color:#fff;padding:12px 20px;border-radius:12px;font:700 14px Cairo,sans-serif;z-index:99999999;border:2px solid #ffd96d;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:80%;text-align:center;';
+    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:' + (color || '#0a1410') + ';color:#fff;padding:12px 20px;border-radius:12px;font:700 14px Cairo,sans-serif;z-index:99999999;border:2px solid #ffd96d;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:85%;text-align:center;';
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(function(){ t.remove(); }, 3000);
   }
 
+  // ============ فتح الإعلان ============
   function openAd(){
     if (window.WebToApk && window.WebToApk.openExternal) return window.WebToApk.openExternal(SMARTLINK);
     if (window.AppCreator24 && window.AppCreator24.openExternal) return window.AppCreator24.openExternal(SMARTLINK);
@@ -61,6 +67,7 @@
     if (!w) window.location.href = SMARTLINK;
   }
 
+  // ============ إعطاء عملات ============
   function giveCoins(n){
     try {
       if (window.__game && window.__game.state){
@@ -72,11 +79,39 @@
     } catch(e){}
   }
 
+  // ============ عدّاد اليوم (50 إعلان) ============
+  function loadDaily(){
+    try {
+      const d = JSON.parse(localStorage.getItem(STORAGE.daily) || '{}');
+      if (d.day !== today()) return { day: today(), count: 0 };
+      return { day: d.day, count: Number(d.count) || 0 };
+    } catch(e){ return { day: today(), count: 0 }; }
+  }
+  function saveDaily(d){ try { localStorage.setItem(STORAGE.daily, JSON.stringify(d)); } catch(e){} }
+  function incDaily(){
+    const d = loadDaily();
+    d.count = Math.min(DAILY_LIMIT, d.count + 1);
+    saveDaily(d);
+    return d.count;
+  }
+  function remainingDaily(){
+    return Math.max(0, DAILY_LIMIT - loadDaily().count);
+  }
+
+  // ============ نظام الجلسة ============
   let adSession = null;
   let adFailTimer = null;
 
   function startAdSession(label, onSuccess, onFail){
     if (adSession) return;
+
+    // نتأكد من الحد اليومي
+    if (remainingDaily() <= 0){
+      toast('🚫 خلصت الإعلانات المتاحة النهاردة', '#7f1d1d');
+      if (onFail) onFail(0);
+      return;
+    }
+
     adSession = { start: now(), onSuccess: onSuccess, onFail: onFail };
     openAd();
     topBar(15, label);
@@ -98,6 +133,7 @@
     adSession = null;
     if (adFailTimer){ clearTimeout(adFailTimer); adFailTimer = null; }
     if (elapsed >= AD_MIN){
+      incDaily();
       if (s.onSuccess) s.onSuccess();
     } else {
       if (s.onFail) s.onFail(Math.round(elapsed / 1000));
@@ -116,58 +152,76 @@
     }
   });
 
+  // ============ 1) زر "شاهد إعلان" الرئيسي ============
   function addRewardBtn(){
     if ($('myRewardBtn')) return;
     const btn = document.createElement('button');
     btn.id = 'myRewardBtn';
-    btn.textContent = '📺 شاهد إعلان واحصل على 20 🪙';
     btn.style.cssText = 'display:block;width:92%;margin:14px auto;padding:14px;background:linear-gradient(135deg,#ffd96d,#d99022);color:#2a1900;border:0;border-radius:16px;font:800 15px Cairo,sans-serif;box-shadow:0 6px 0 #8a5c10;cursor:pointer;position:relative;z-index:100;';
+    btn.textContent = '📺 شاهد إعلان +5 🪙 (' + remainingDaily() + ' متبقي)';
+
     btn.onclick = function(){
       if (btn.disabled || adSession) return;
+      if (remainingDaily() <= 0){
+        toast('🚫 خلصت إعلانات النهاردة', '#7f1d1d');
+        return;
+      }
       btn.disabled = true;
       const old = btn.textContent;
       btn.textContent = '⏳ جاري فتح الإعلان...';
+
       startAdSession(
-        '🎁 إعلان مكافأة +20 🪙',
+        '🎁 إعلان مكافأة +5 🪙',
         function(){
           hideBar();
-          giveCoins(20);
-          btn.textContent = '✅ تم! +20 🪙';
-          toast('✅ ممتاز! +20 عملة', '#065f46');
-          setTimeout(function(){ btn.textContent = old; btn.disabled = false; }, 2500);
+          giveCoins(COINS_PER_AD);
+          btn.textContent = '✅ +5 🪙';
+          toast('✅ ممتاز! +5 عملات', '#065f46');
+          setTimeout(function(){
+            btn.textContent = '📺 شاهد إعلان +5 🪙 (' + remainingDaily() + ' متبقي)';
+            btn.disabled = false;
+          }, 2000);
         },
         function(sec){
           hideBar();
-          btn.textContent = '❌ قفلت بدري (' + sec + 'ث)';
-          toast('❌ قفلت الإعلان بدري - مفيش مكافأة', '#7f1d1d');
-          setTimeout(function(){ btn.textContent = old; btn.disabled = false; }, 3000);
+          btn.textContent = sec > 0 ? '❌ قفلت بدري (' + sec + 'ث)' : '❌ مفيش مكافأة';
+          toast(sec > 0 ? '❌ قفلت الإعلان بدري (' + sec + 'ث)' : '❌ مفيش مكافأة', '#7f1d1d');
+          setTimeout(function(){
+            btn.textContent = '📺 شاهد إعلان +5 🪙 (' + remainingDaily() + ' متبقي)';
+            btn.disabled = false;
+          }, 2500);
         }
       );
     };
+
     const tower = $('tower');
     if (tower && tower.parentNode) tower.parentNode.insertBefore(btn, tower);
   }
 
+  // ============ 2) إعلان تلقائي بعد الفوز/الخسارة ============
   let lastAutoAd = 0;
   let autoBusy = false;
 
   function fireAutoAd(type){
     if (autoBusy || adSession) return;
     if (now() - lastAutoAd < AUTO_COOLDOWN) return;
+    if (remainingDaily() <= 0) return;
     autoBusy = true;
     lastAutoAd = now();
-    const label = type === 'win' ? '🏆 إعلان بعد الفوز (+10 🪙)' : '💥 إعلان بعد الخسارة (+10 🪙)';
+    const label = type === 'win'
+      ? '🏆 إعلان بعد الفوز (+5 🪙)'
+      : '💥 إعلان بعد الخسارة (+5 🪙)';
     startAdSession(
       label,
       function(){
         hideBar();
-        giveCoins(10);
-        toast('✅ ممتاز! +10 عملات', '#065f46');
+        giveCoins(COINS_PER_AD);
+        toast('✅ ممتاز! +5 عملات', '#065f46');
         autoBusy = false;
       },
       function(sec){
         hideBar();
-        toast('❌ قفلت الإعلان بدري - مفيش مكافأة', '#7f1d1d');
+        toast(sec > 0 ? '❌ قفلت الإعلان بدري (' + sec + 'ث)' : '❌ مفيش مكافأة', '#7f1d1d');
         autoBusy = false;
       }
     );
@@ -188,11 +242,40 @@
     }
   }
 
+  // ============ 3) إعلان تلقائي عند فتح اللعبة ============
+  function firstOpenAd(){
+    if (sessionStorage.getItem('firstAdShown')) return;
+    const splash = $('splash');
+    if (!splash) return;
+    const obs = new MutationObserver(function(){
+      if (splash.classList.contains('hidden')){
+        obs.disconnect();
+        sessionStorage.setItem('firstAdShown', '1');
+        setTimeout(function(){
+          if (remainingDaily() <= 0) return;
+          startAdSession(
+            '👋 إعلان الترحيب (+5 🪙)',
+            function(){
+              hideBar();
+              giveCoins(COINS_PER_AD);
+              toast('👋 أهلاً! +5 عملات ترحيبية', '#065f46');
+            },
+            function(){
+              hideBar();
+            }
+          );
+        }, 2500);
+      }
+    });
+    obs.observe(splash, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  // ============ 4) السحب (50 إعلان) ============
   function loadW(){
-    try { const d = JSON.parse(localStorage.getItem(STORAGE.w) || '{}'); return { c: Number(d.c) || 0 }; }
+    try { const d = JSON.parse(localStorage.getItem(STORAGE.withdraw) || '{}'); return { c: Number(d.c) || 0 }; }
     catch(e){ return { c: 0 }; }
   }
-  function saveW(d){ try { localStorage.setItem(STORAGE.w, JSON.stringify(d)); } catch(e){} }
+  function saveW(d){ try { localStorage.setItem(STORAGE.withdraw, JSON.stringify(d)); } catch(e){} }
 
   function addWithdrawBox(){
     const panel = $('withdrawPanel');
@@ -200,15 +283,21 @@
     const box = document.createElement('div');
     box.id = 'myWdBox';
     box.style.cssText = 'margin:14px 0;padding:14px;border-radius:14px;background:rgba(255,215,100,.08);border:1px solid rgba(255,215,100,.3);direction:rtl;';
-    box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="font-weight:800;color:#ffd96d;">📺 متطلبات السحب</span><span id="wdCount" style="font-weight:900;color:#fff;">0/' + WITHDRAW_REQ + '</span></div><div style="height:8px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden;margin-bottom:10px;"><div id="wdBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffd96d,#e7a928);transition:width .3s;"></div></div><div style="font-size:11px;color:rgba(255,255,255,.78);margin-bottom:10px;line-height:1.8;">⚠️ لسحب أرباحك، لازم تتفرج على <b style="color:#ffd96d;">' + WITHDRAW_REQ + ' إعلان كامل</b>.<br>مدة كل إعلان: <b>15 ثانية</b>.</div><button id="wdBtn" type="button" style="width:100%;padding:12px;border:0;border-radius:12px;background:linear-gradient(135deg,#ffd96d,#d99022);color:#2a1900;font:800 14px Cairo,sans-serif;cursor:pointer;">📺 شاهد إعلان للسحب (0/' + WITHDRAW_REQ + ')</button>';
+    box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="font-weight:800;color:#ffd96d;">📺 متطلبات السحب</span><span id="wdCount" style="font-weight:900;color:#fff;">0/' + WITHDRAW_REQ + '</span></div><div style="height:8px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden;margin-bottom:10px;"><div id="wdBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffd96d,#e7a928);transition:width .3s;"></div></div><div style="font-size:11px;color:rgba(255,255,255,.78);margin-bottom:10px;line-height:1.8;">⚠️ لسحب أرباحك، لازم تتفرج على <b style="color:#ffd96d;">' + WITHDRAW_REQ + ' إعلان كامل</b>.<br>مدة كل إعلان: <b>15 ثانية</b>. لو قفلت قبل الوقت، <b>لن يُحسب</b>.</div><button id="wdBtn" type="button" style="width:100%;padding:12px;border:0;border-radius:12px;background:linear-gradient(135deg,#ffd96d,#d99022);color:#2a1900;font:800 14px Cairo,sans-serif;cursor:pointer;">📺 شاهد إعلان للسحب (0/' + WITHDRAW_REQ + ')</button>';
     const submit = $('withdrawBtn') || document.querySelector('.withdraw-submit-new');
     if (submit && submit.parentNode) submit.parentNode.insertBefore(box, submit);
     else panel.appendChild(box);
+
     $('wdBtn').onclick = function(e){
       e.preventDefault(); e.stopImmediatePropagation();
       if (adSession) return;
       const d = loadW();
       if (d.c >= WITHDRAW_REQ) return;
+      if (remainingDaily() <= 0){
+        toast('🚫 خلصت إعلانات النهاردة', '#7f1d1d');
+        return;
+      }
+
       startAdSession(
         '📺 إعلان للسحب (' + d.c + '/' + WITHDRAW_REQ + ')',
         function(){
@@ -221,7 +310,7 @@
         },
         function(sec){
           hideBar();
-          toast('❌ قفلت الإعلان بدري - مش محتسب', '#7f1d1d');
+          toast(sec > 0 ? '❌ قفلت الإعلان بدري (' + sec + 'ث)' : '❌ مش محتسب', '#7f1d1d');
         }
       );
     };
@@ -264,14 +353,15 @@
     });
   }
 
+  // ============ 5) عجلة الحظ (10 لفات) ============
   function loadWh(){
     try {
-      const d = JSON.parse(localStorage.getItem(STORAGE.wh) || '{}');
+      const d = JSON.parse(localStorage.getItem(STORAGE.wheel) || '{}');
       if (d.day !== today()) return { day: today(), s: 0 };
       return { day: d.day, s: Number(d.s) || 0 };
     } catch(e){ return { day: today(), s: 0 }; }
   }
-  function saveWh(d){ try { localStorage.setItem(STORAGE.wh, JSON.stringify(d)); } catch(e){} }
+  function saveWh(d){ try { localStorage.setItem(STORAGE.wheel, JSON.stringify(d)); } catch(e){} }
   let whBusy = false;
 
   function hookWheel(){
@@ -285,13 +375,19 @@
     const left = Math.max(0, WHEEL_DAILY - d.s);
     clone.textContent = left > 0 ? '📺 شاهد إعلان للحصول على لفة (' + left + ' متبقية)' : '🚫 خلصت لفات النهاردة - ارجع بكرة';
     clone.disabled = left <= 0;
+
     clone.addEventListener('click', function(e){
       e.preventDefault(); e.stopImmediatePropagation();
       if (whBusy || adSession) return;
       if (loadWh().s >= WHEEL_DAILY) return;
+      if (remainingDaily() <= 0){
+        toast('🚫 خلصت إعلانات النهاردة', '#7f1d1d');
+        return;
+      }
       whBusy = true;
       clone.disabled = true;
       clone.textContent = '⏳ جاري فتح الإعلان...';
+
       startAdSession(
         '🎡 إعلان لفة العجلة',
         function(){
@@ -309,15 +405,15 @@
         },
         function(sec){
           hideBar();
-          clone.textContent = '❌ قفلت الإعلان بدري';
+          clone.textContent = sec > 0 ? '❌ قفلت بدري (' + sec + 'ث)' : '❌ مش محتسب';
           whBusy = false;
-          toast('❌ قفلت الإعلان بدري - مفيش لفة', '#7f1d1d');
+          toast(sec > 0 ? '❌ قفلت الإعلان بدري' : '❌ مش محتسب', '#7f1d1d');
           setTimeout(function(){
             const d2 = loadWh();
             const nl = Math.max(0, WHEEL_DAILY - d2.s);
             clone.textContent = nl > 0 ? '📺 شاهد إعلان للحصول على لفة (' + nl + ' متبقية)' : '🚫 خلصت لفات النهاردة - ارجع بكرة';
             clone.disabled = nl <= 0;
-          }, 3000);
+          }, 2500);
         }
       );
     });
@@ -339,6 +435,7 @@
     }, 4700);
   }
 
+  // ============ تنظيف ============
   function removeOld(){
     const p = $('dailyAdsPanel');
     if (p) p.remove();
@@ -355,6 +452,7 @@
 
   function boot(){
     refresh();
+    firstOpenAd();
     setInterval(refresh, 1000);
     setInterval(watchMessages, 800);
   }
