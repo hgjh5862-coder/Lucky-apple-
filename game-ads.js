@@ -4,25 +4,26 @@
   const REWARD_COINS = 20;
   const WITHDRAW_REQ = 30;
   const WHEEL_DAILY = 10;
-  const STORAGE = { w: 'lucky_wd_v3', wh: 'lucky_wh_v3' };
+  const AUTO_AD_COOLDOWN = 10000; // 10 ثواني بين كل إعلانين تلقائيين
+  const STORAGE = { w: 'lucky_wd_v4', wh: 'lucky_wh_v4', rounds: 'lucky_rounds_v1' };
 
   const $ = (id) => document.getElementById(id);
   const now = () => Date.now();
   const today = () => { const d = new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); };
 
-  // علامة
+  // ============ علامة التشغيل ============
   const badge = document.createElement('div');
-  badge.style.cssText = 'position:fixed;bottom:6px;right:6px;background:green;color:#fff;padding:5px 9px;border-radius:8px;font:11px Cairo,sans-serif;z-index:99999999;';
+  badge.style.cssText = 'position:fixed;bottom:6px;right:6px;background:green;color:#fff;padding:5px 9px;border-radius:8px;font:11px Cairo,sans-serif;z-index:99999999;pointer-events:none;';
   badge.textContent = 'ads ON';
   if (document.body) document.body.appendChild(badge);
 
-  // شريط العدّاد
+  // ============ شريط العدّاد ============
   function topBar(sec, label){
     let ov = $('adsTop');
     if (!ov){
       ov = document.createElement('div');
       ov.id = 'adsTop';
-      ov.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#0a1410;color:#fff;padding:14px;z-index:2147483647;text-align:center;font:700 14px Cairo,sans-serif;border-bottom:2px solid #ffd96d;transform:translateY(-100%);transition:transform .3s;pointer-events:none;';
+      ov.style.cssText = 'position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,#0a1410,#1a3220);color:#fff;padding:14px;z-index:2147483647;text-align:center;font:700 14px Cairo,sans-serif;border-bottom:2px solid #ffd96d;transform:translateY(-100%);transition:transform .3s;pointer-events:none;';
       ov.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:12px;"><span style="font-size:20px;">📺</span><span id="adsTxt">جاري عرض الإعلان...</span><span id="adsNum" style="display:inline-flex;align-items:center;justify-content:center;min-width:42px;height:42px;background:#ffd96d;color:#2a1900;border-radius:50%;font:900 18px Cairo,sans-serif;">15</span></div><div style="margin-top:6px;font-size:11px;color:#ffb3b3;">⚠️ لا تغلق الإعلان حتى انتهاء العدّاد</div><div style="margin-top:8px;height:6px;background:rgba(255,255,255,.15);border-radius:4px;overflow:hidden;"><div id="adsBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffd96d,#e7a928);transition:width .2s;"></div></div>';
       document.body.appendChild(ov);
     }
@@ -38,14 +39,13 @@
       $('adsBar').style.width = ((sec-left)/sec*100)+'%';
       if (left <= 0) clearInterval(tk);
     }, 1000);
-    return tk;
   }
   function hideBar(){
     const ov = $('adsTop');
     if (ov) ov.style.transform = 'translateY(-100%)';
   }
 
-  // فتح الإعلان
+  // ============ فتح الإعلان ============
   function openAd(){
     if (window.WebToApk && window.WebToApk.openExternal) return window.WebToApk.openExternal(SMARTLINK);
     if (window.AppCreator24 && window.AppCreator24.openExternal) return window.AppCreator24.openExternal(SMARTLINK);
@@ -53,7 +53,17 @@
     if (!w) window.location.href = SMARTLINK;
   }
 
-  // مكافأة
+  // ============ إعلان تلقائي مع كولداون ============
+  let lastAuto = 0;
+  function autoAd(label){
+    if (now() - lastAuto < AUTO_AD_COOLDOWN) return;
+    lastAuto = now();
+    openAd();
+    topBar(AD_DURATION/1000, label);
+    setTimeout(hideBar, AD_DURATION);
+  }
+
+  // ============ مكافأة ============
   function giveCoins(n){
     try {
       if (window.__game && window.__game.state){
@@ -65,13 +75,13 @@
     } catch(e){}
   }
 
-  // ============ زرار +20 ============
+  // ============ 1) زرار "شاهد إعلان +20" ============
   function addRewardBtn(){
     if ($('myRewardBtn')) return;
     const btn = document.createElement('button');
     btn.id = 'myRewardBtn';
     btn.textContent = '📺 شاهد إعلان واحصل على 20 🪙';
-    btn.style.cssText = 'display:block;width:92%;margin:14px auto;padding:14px;background:linear-gradient(135deg,#ffd96d,#d99022);color:#2a1900;border:0;border-radius:16px;font:800 15px Cairo,sans-serif;box-shadow:0 6px 0 #8a5c10;cursor:pointer;';
+    btn.style.cssText = 'display:block;width:92%;margin:14px auto;padding:14px;background:linear-gradient(135deg,#ffd96d,#d99022);color:#2a1900;border:0;border-radius:16px;font:800 15px Cairo,sans-serif;box-shadow:0 6px 0 #8a5c10;cursor:pointer;position:relative;z-index:100;';
     btn.onclick = function(){
       if (btn.disabled) return;
       btn.disabled = true;
@@ -90,24 +100,66 @@
     if (tower && tower.parentNode) tower.parentNode.insertBefore(btn, tower);
   }
 
-  // ============ إعلان بعد الخسارة ============
-  let lastLoss = 0;
-  function checkLoss(){
+  // ============ 2) مراقبة الفوز والخسارة + عداد الجولات ============
+  let roundCount = 0;
+  try { roundCount = Number(localStorage.getItem(STORAGE.rounds) || 0); } catch(e){}
+
+  function watchMessages(){
     const msg = $('message');
     if (!msg) return;
     const t = (msg.textContent || '').trim();
-    if (t === checkLoss.last) return;
-    checkLoss.last = t;
+    if (t === watchMessages.last) return;
+    watchMessages.last = t;
+
+    // خسارة
     if (t.indexOf('قنبلة') !== -1 || t.indexOf('خسرت') !== -1){
-      if (now() - lastLoss < 20000) return;
-      lastLoss = now();
-      openAd();
-      topBar(15, '🎯 إعلان بعد الخسارة');
-      setTimeout(hideBar, AD_DURATION);
+      roundCount++;
+      try { localStorage.setItem(STORAGE.rounds, String(roundCount)); } catch(e){}
+      setTimeout(function(){ autoAd('🎯 إعلان بعد الخسارة'); }, 1200);
+      return;
+    }
+
+    // فوز
+    if (t.indexOf('جمعت') !== -1 || t.indexOf('القمة') !== -1 || t.indexOf('مبروك') !== -1){
+      roundCount++;
+      try { localStorage.setItem(STORAGE.rounds, String(roundCount)); } catch(e){}
+      setTimeout(function(){ autoAd('🏆 إعلان بعد الفوز'); }, 1500);
+
+      // كل 3 جولات → إعلان إضافي
+      if (roundCount % 3 === 0){
+        setTimeout(function(){ autoAd('🎮 إعلان إضافي كل 3 جولات'); }, 4000);
+      }
     }
   }
 
-  // ============ السحب (30 إعلان) ============
+  // ============ 3) إعلان لما اللاعب يدخل اللعبة ============
+  function firstOpenAd(){
+    if (sessionStorage.getItem('firstAdShown')) return;
+    const splash = $('splash');
+    if (!splash) return;
+
+    const obs = new MutationObserver(function(){
+      if (splash.classList.contains('hidden')){
+        obs.disconnect();
+        sessionStorage.setItem('firstAdShown', '1');
+        setTimeout(function(){ autoAd('👋 إعلان الترحيب'); }, 2500);
+      }
+    });
+    obs.observe(splash, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  // ============ 4) إعلان عند الضغط على "اجمع العملات" ============
+  function hookCollect(){
+    const btn = $('collectBtn');
+    if (!btn || btn.__adsHooked) return;
+    btn.__adsHooked = true;
+    const orig = btn.onclick;
+    btn.addEventListener('click', function(){
+      setTimeout(function(){ autoAd('💰 إعلان عند جمع العملات'); }, 2000);
+    });
+  }
+
+  // ============ 5) السحب (30 إعلان) ============
   function loadW(){
     try { const d = JSON.parse(localStorage.getItem(STORAGE.w) || '{}'); return { c: Number(d.c)||0, p: Number(d.p)||0, k: !!d.k }; }
     catch(e){ return { c:0, p:0, k:false }; }
@@ -167,7 +219,7 @@
     });
   }
 
-  // ============ عجلة الحظ (10 لفات) ============
+  // ============ 6) عجلة الحظ (10 لفات) ============
   function loadWh(){
     try { const d = JSON.parse(localStorage.getItem(STORAGE.wh) || '{}'); if (d.day !== today()) return { day: today(), s: 0 }; return { day: d.day, s: Number(d.s)||0 }; }
     catch(e){ return { day: today(), s: 0 }; }
@@ -232,20 +284,22 @@
     if (p) p.remove();
   }
 
-  // ============ Refresh ============
+  // ============ تشغيل ============
   function refresh(){
     removeOld();
     addRewardBtn();
     addWithdrawBox();
     updateWdUI();
     hookWheel();
+    hookCollect();
     resetWdAfterSubmit();
   }
 
   function boot(){
     refresh();
+    firstOpenAd();
     setInterval(refresh, 1000);
-    setInterval(checkLoss, 800);
+    setInterval(watchMessages, 800);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
