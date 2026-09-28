@@ -460,4 +460,76 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
   document.addEventListener('visibilitychange', function(){ if (!document.hidden) refresh(); });
+  
+// ============ Supabase ============
+const SB_URL = 'https://ujzhaiikjsqejwhjtbvu.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqemhhaWlranNxZWp3aGp0YnZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MjIxMTksImV4cCI6MjEwNjA5ODExOX0.ZH9qpoP1S53JQxYAWOLrf-U4dyTfQH4zjvc2CufSg5s';
+const SB_H = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
+let sbUserId = localStorage.getItem('lucky_uid');
+
+async function sbApi(path, opt){
+  opt = opt || {};
+  opt.headers = SB_H;
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/' + path, opt);
+    return await r.json();
+  } catch(e){ return null; }
+}
+
+async function sbCreateUser(){
+  const id = 'AF-' + Math.random().toString(36).substring(2,10).toUpperCase();
+  const code = 'APPLE-' + Math.floor(100000 + Math.random()*900000);
+  await sbApi('users', {
+    method: 'POST',
+    body: JSON.stringify({
+      id: id,
+      code: code,
+      balance: 1000,
+      best: 1,
+      daily_date: new Date().toDateString(),
+      created_at: Date.now()
+    })
+  });
+  localStorage.setItem('lucky_uid', id);
+  return id;
+}
+
+async function sbGetMe(){
+  if (!sbUserId) return null;
+  const r = await sbApi('users?id=eq.' + sbUserId + '&select=*');
+  return r && r[0] ? r[0] : null;
+}
+
+async function sbSyncBalance(){
+  if (!sbUserId) return;
+  if (!window.__game || !window.__game.state) return;
+  const cur = Math.floor(window.__game.state.balance || 0);
+  if (sbSyncBalance.last === cur) return;
+  sbSyncBalance.last = cur;
+  await sbApi('users?id=eq.' + sbUserId, {
+    method: 'PATCH',
+    body: JSON.stringify({ balance: cur })
+  });
+}
+
+async function sbBoot(){
+  if (!sbUserId) sbUserId = await sbCreateUser();
+  let me = await sbGetMe();
+  if (!me){
+    sbUserId = await sbCreateUser();
+    me = await sbGetMe();
+  }
+  const wait = setInterval(function(){
+    if (window.__game && window.__game.state){
+      clearInterval(wait);
+      window.__game.state.balance = me.balance;
+      if (window.__game.update) window.__game.update();
+      sbSyncBalance.last = me.balance;
+      setInterval(sbSyncBalance, 3000);
+    }
+  }, 500);
+}
+
+setTimeout(sbBoot, 2000);
 })();
