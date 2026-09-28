@@ -139,30 +139,59 @@
     lossBusy = true;
     lastLossAd = now();
 
-    startAdSession(
-      '🎯 إعلان بعد الخسارة',
-      function(){
-        hideBar();
-        lossBusy = false;
-      },
-      function(){
-        hideBar();
-        lossBusy = false;
-      }
-    );
-  }
+    let lastAutoAd = 0;
+let autoAdBusy = false;
 
-  function watchMessages(){
-    const msg = $('message');
-    if (!msg) return;
-    const t = (msg.textContent || '').trim();
-    if (t === watchMessages.last) return;
-    watchMessages.last = t;
+function fireAutoAd(type){
+  if (autoAdBusy) return;
+  if (now() - lastAutoAd < 20000) return;
+  autoAdBusy = true;
+  lastAutoAd = now();
 
-    if (t.indexOf('قنبلة') !== -1 || t.indexOf('خسرت') !== -1){
-      setTimeout(fireLossAd, 1500);
+  const label = type === 'win'
+    ? '🏆 إعلان بعد الفوز - +10 🪙'
+    : '💥 إعلان بعد الخسارة - +10 🪙';
+
+  startAdSession(
+    label,
+    function(){
+      hideBar();
+      giveCoins(10);
+      autoAdBusy = false;
+      showToast('✅ ممتاز! +10 عملات');
+    },
+    function(sec){
+      hideBar();
+      autoAdBusy = false;
+      showToast('❌ قفلت الإعلان بدري - مفيش مكافأة');
     }
+  );
+}
+
+function showToast(msg){
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#0a1410;color:#fff;padding:12px 20px;border-radius:12px;font:700 14px Cairo,sans-serif;z-index:99999999;border:2px solid #ffd96d;box-shadow:0 8px 24px rgba(0,0,0,.4);';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3000);
+}
+
+function watchMessages(){
+  const msg = $('message');
+  if (!msg) return;
+  const t = (msg.textContent || '').trim();
+  if (t === watchMessages.last) return;
+  watchMessages.last = t;
+
+  if (t.indexOf('قنبلة') !== -1 || t.indexOf('خسرت') !== -1){
+    setTimeout(function(){ fireAutoAd('loss'); }, 1500);
+    return;
   }
+
+  if (t.indexOf('جمعت') !== -1 || t.indexOf('القمة') !== -1 || t.indexOf('مبروك') !== -1){
+    setTimeout(function(){ fireAutoAd('win'); }, 1500);
+  }
+}
 
   // ============ 3) السحب (30 إعلان) ============
   function loadW(){
