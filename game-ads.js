@@ -5,7 +5,8 @@
   const badge = document.createElement('div');
   badge.style.cssText = 'position:fixed;bottom:6px;right:6px;background:green;color:#fff;padding:5px 9px;border-radius:8px;font:11px Cairo,sans-serif;z-index:99999999;';
   badge.textContent = 'ads ON';
-  document.addEventListener('DOMContentLoaded', function(){ document.body.appendChild(badge); });
+  if (document.body) document.body.appendChild(badge);
+else document.addEventListener('DOMContentLoaded', function(){ document.body.appendChild(badge); });
 
   // دالة فتح الإعلان
   function openAd(){
