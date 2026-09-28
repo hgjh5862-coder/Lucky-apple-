@@ -49,30 +49,20 @@
     if (ov) ov.style.transform = 'translateY(-100%)';
     if (ovTicker) { clearInterval(ovTicker); ovTicker = null; }
   }
-
-  // ============ Open Ad (iframe overlay) ============
-  function openAd(){
-    if (window.WebToApk && window.WebToApk.openExternal) { window.WebToApk.openExternal(SMARTLINK); return; }
-if (window.AppCreator24 && window.AppCreator24.openExternal) { window.AppCreator24.openExternal(SMARTLINK); return; }
-    const existing = $('adsFrameOverlay');
-    if (existing) existing.remove();
-    const ov = document.createElement('div');
-    ov.id = 'adsFrameOverlay';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:#000;display:flex;flex-direction:column;';
-    const bar = document.createElement('div');
-    bar.style.cssText = 'background:#1a1a1a;color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font:700 13px Cairo,sans-serif;border-bottom:2px solid #ffd96d;';
-    bar.innerHTML = '<span>📺 الإعلان</span><button id="adsFrameClose" style="background:#ffd96d;color:#2a1900;border:0;border-radius:8px;padding:6px 14px;font:800 12px Cairo,sans-serif;cursor:pointer;">إغلاق ✕</button>';
-    const iframe = document.createElement('iframe');
-    iframe.src = SMARTLINK;
-    iframe.style.cssText = 'flex:1;width:100%;border:0;background:#000;';
-    iframe.setAttribute('allow','autoplay; encrypted-media');
-    ov.appendChild(bar);
-    ov.appendChild(iframe);
-    document.body.appendChild(ov);
-    $('adsFrameClose').onclick = function(){ ov.remove(); };
-    setTimeout(function(){ if (ov.parentNode) ov.remove(); }, 20000);
-  }
-
+53  // ============ Open Ad ============
+54  function openAd(){
+55    if (window.WebToApk && window.WebToApk.openExternal) {
+56      window.WebToApk.openExternal(SMARTLINK);
+57      return;
+58    }
+59    if (window.AppCreator24 && window.AppCreator24.openExternal) {
+60      window.AppCreator24.openExternal(SMARTLINK);
+61      return;
+62    }
+63    const w = window.open(SMARTLINK, '_blank');
+64    if (!w) window.location.href = SMARTLINK;
+65  }
+  
   // ============ Hide old ad panel ============
   const hs = document.createElement('style');
   hs.textContent = '#dailyAdsPanel, .daily-ads-panel { display:none !important; } .ad-recover { display:block !important; } .ad-recover:not(.show) { display:none !important; }';
