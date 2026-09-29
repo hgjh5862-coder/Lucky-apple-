@@ -541,37 +541,54 @@ async function sbBoot(){
 
 setTimeout(sbBoot, 2000);
  
-// ============ 👑 Admin Mode (5 taps on balance) ============
+// ============ 👑 Admin Mode (5 taps top-left corner) ============
 (function(){
   var taps = 0, lastTap = 0;
-  document.addEventListener('click', function(e){
-    if (e.target.closest && e.target.closest('.balance-pill')){
-      var now = Date.now();
-      taps = (now - lastTap < 500) ? taps + 1 : 1;
-      lastTap = now;
-      if (taps >= 5){ taps = 0; showAdminPanel(); }
+  function handleTap(e){
+    // نجيب إحداثيات اللمس/الضغط
+    var x = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+    var y = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+    var w = window.innerWidth;
+    // الركن العلوي (يمين أو شمال)
+    var inCorner = (x < w * 0.35 || x > w * 0.65) && y < 100;
+    
+    if (!inCorner) { taps = 0; return; }
+    
+    var now = Date.now();
+    taps = (now - lastTap < 800) ? taps + 1 : 1;
+    lastTap = now;
+    
+    if (taps >= 5){
+      taps = 0;
+      showAdminPanel();
     }
-  }, true);
+  }
+  document.addEventListener('click', handleTap, true);
+  document.addEventListener('touchstart', handleTap, true);
+  
   function showAdminPanel(){
     var old = document.getElementById('adminPanel');
     if (old) old.remove();
     var state = window.__game && window.__game.state;
     if (!state) return alert('اللعبة لسه ما اشتغلتش');
-    var html = '<div style="color:#ffd96d;font-weight:900;font-size:16px;margin-bottom:10px;">👑 وضع المطور</div>';
+    var html = '<div style="color:#ffd96d;font-weight:900;font-size:18px;margin-bottom:12px;">👑 أماكن التفاحات</div>';
     state.rows.forEach(function(r, i){
       var icons = [0,1,2,3,4].map(function(c){
         return r.bombIdxs.indexOf(c) !== -1 ? '💣' : '🍎';
       }).join(' ');
-      var color = i === state.currentRow ? '#ffd96d' : '#aaa';
-      html += '<div style="color:' + color + ';margin:5px 0;font-size:14px;">صف ' + (i+1) + ': ' + icons + '</div>';
+      var color = i === state.currentRow ? '#4ade80' : '#ccc';
+      var arrow = i === state.currentRow ? ' ← ' : '';
+      html += '<div style="color:' + color + ';margin:6px 0;font-size:16px;">صف ' + (i+1) + ': ' + icons + arrow + '</div>';
     });
-    html += '<div style="margin-top:12px;color:#aaa;font-size:11px;">المرحلة: ' + state.currentRow + '/8 | الرصيد: ' + state.balance + ' 🪙</div>';
-    html += '<button onclick="document.getElementById(\'adminPanel\').remove()" style="margin-top:12px;width:100%;padding:10px;background:#ffd96d;color:#2a1900;border:0;border-radius:10px;font:800 14px Cairo,sans-serif;">إغلاق</button>';
+    html += '<div style="margin-top:14px;color:#aaa;font-size:11px;">المرحلة: ' + state.currentRow + '/8 | الرصيد: ' + state.balance + ' 🪙</div>';
+    html += '<button onclick="document.getElementById(\'adminPanel\').remove()" style="margin-top:14px;width:100%;padding:12px;background:#ffd96d;color:#2a1900;border:0;border-radius:10px;font:800 15px Cairo,sans-serif;cursor:pointer;">إغلاق</button>';
     var panel = document.createElement('div');
     panel.id = 'adminPanel';
-    panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,20,15,.97);border:2px solid #ffd96d;border-radius:20px;padding:20px;z-index:99999999;max-width:90%;width:340px;direction:rtl;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.7);font-family:Cairo,sans-serif;';
+    panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,20,15,.98);border:2px solid #ffd96d;border-radius:20px;padding:20px;z-index:2147483647;max-width:92%;width:340px;direction:rtl;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.8);font-family:Cairo,sans-serif;';
     panel.innerHTML = html;
     document.body.appendChild(panel);
-    setTimeout(function(){ if (panel.parentNode) panel.remove(); }, 20000);
+    setTimeout(function(){ if (panel.parentNode) panel.remove(); }, 30000);
   }
+  
+  console.log('👑 Admin: اضغط 5 مرات في أعلى الشاشة');
 })();
