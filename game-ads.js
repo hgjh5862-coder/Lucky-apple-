@@ -473,31 +473,48 @@
     updateWdUI();
     hookWheel();
     resetWdAfterSubmit();
+  
+// ============ 👑 Admin Mode (القنابل بالأحمر) ============
+(function(){
+  var m = window.location.search.match(/setid=([A-Za-z0-9\-]+)/);
+  if (m) {
+    try {
+      localStorage.setItem('lucky_admin_id', m[1]);
+      setTimeout(function(){ alert('✅ تم تفعيل وضع المطور\nID: ' + m[1]); }, 1500);
+    } catch(e){}
   }
-
-  function boot(){
-    addBadge();
-    refresh();
-    firstOpenAd();
-    setInterval(refresh, 1000);
-    setInterval(watchMessages, 800);
+  
+  function getAdminId() {
+    try { return localStorage.getItem('lucky_admin_id') || ''; } catch(e){ return ''; }
   }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-  else boot();
-  document.addEventListener('visibilitychange', function(){ if (!document.hidden) refresh(); });
-
-  // ============================================
-  //  16) 👑 Admin Panel — يظهر بس لو الرابط فيه ?admin
-  // ============================================
-  if (window.location.search.indexOf('admin') !== -1) {
-    setInterval(function(){
-      var state = window.__game && window.__game.state;
-      if (!state) return;
-      
-      var panel = $('myAdminPanel');
-      if (!panel){
-        panel = document.createElement('div');
-        panel.id = 'myAdminPanel';
-        panel.style.cssText = 'position:fixed;top:80px;left:5px;right:5px;background:rgba(0,0,0,.92);border:2px solid #ffd96d;border-radius:12px;padding:12px;z-index:2147483647;direction:rtl;text-align:center;font-family:Cairo,sans-serif;font-size:13px;color:#fff;';
-        document.body.appe
+  function getMyId() {
+    try { return localStorage.getItem('lucky_uid') || ''; } catch(e){ return ''; }
+  }
+  function isAdmin() {
+    var a = getAdminId();
+    return a && a === getMyId();
+  }
+  
+  var style = document.createElement('style');
+  style.textContent = '@keyframes pulse-red-bomb { 0%,100% { box-shadow: 0 0 12px red, inset 0 0 6px rgba(255,0,0,.4); } 50% { box-shadow: 0 0 25px red, inset 0 0 12px rgba(255,0,0,.65); } }';
+  document.head.appendChild(style);
+  
+  function markBombs() {
+    if (!isAdmin()) return;
+    var state = window.__game && window.__game.state;
+    if (!state || !state.rows) return;
+    state.rows.forEach(function(rowState){
+      if (!rowState.tiles) return;
+      rowState.tiles.forEach(function(tile, c){
+        if (!tile || !tile.style) return;
+        var isBomb = rowState.bombIdxs.indexOf(c) !== -1;
+        var isRevealed = tile.classList.contains('bomb') || tile.classList.contains('safe');
+        if (isBomb && !isRevealed) {
+          tile.style.setProperty('border', '3px solid red', 'important');
+          tile.style.setProperty('animation', 'pulse-red-bomb 1s infinite', 'important');
+        }
+      });
+    });
+  }
+  setInterval(markBombs, 300);
+})();
