@@ -1,19 +1,26 @@
 (function(){
+  'use strict';
 
-// ============ Adsterra Social Bar ============
-(function(){
-  var s = document.createElement('script');
-  s.src = 'https://pl31571426.profitableratecpmnetwork.com/4e/de/47/4ede4761fefd3f3c449a027dc8d2f73ccd.js';
-  s.async = true;
-  document.head.appendChild(s);
-})();
+  // ============================================
+  //  1) Adsterra Social Bar
+  // ============================================
+  (function(){
+    var s = document.createElement('script');
+    s.src = 'https://pl31571426.profitableratecpmnetwork.com/4e/de/47/4ede4761fefd3f3c449a027dc8d2f73ccd.js';
+    s.async = true;
+    document.head.appendChild(s);
+  })();
+
+  // ============================================
+  //  2) الإعدادات
+  // ============================================
   const SMARTLINK = 'https://www.profitableratecpmnetwork.com/ui0j3pra?key=d399235ded04378cd859207920326c81';
-const AD_DURATION = 15000;
-const AD_MIN = 14000;
-const COINS_PER_AD = 3;
-const DAILY_LIMIT = 100;
-const WITHDRAW_REQ = 100;
-const WHEEL_DAILY = 20;
+  const AD_DURATION = 15000;
+  const AD_MIN = 14000;
+  const COINS_PER_AD = 3;
+  const DAILY_LIMIT = 100;
+  const WITHDRAW_REQ = 100;
+  const WHEEL_DAILY = 20;
   const AUTO_COOLDOWN = 25000;
   const STORAGE = { daily: 'lucky_daily_v1', withdraw: 'lucky_wd_v1', wheel: 'lucky_wh_v1' };
 
@@ -21,13 +28,17 @@ const WHEEL_DAILY = 20;
   const now = () => Date.now();
   const today = () => { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
 
-  // ============ علامة التشغيل ============
+  // ============================================
+  //  3) علامة التشغيل
+  // ============================================
   const badge = document.createElement('div');
-  badge.style.cssText = 'position:fixed;bottom:6px;right:6px;background:green;color:#fff;padding:5px 9px;border-radius:8px;font:11px Cairo,sans-serif;z-index:99999999;pointer-events:none;';
+  badge.style.cssText = 'position:fixed;bottom:6px;right:6px;background:green;color:#fff;padding:5px 9px;border-radius:8px;font:11px Cairo,sans-serif;z-index:9999999;pointer-events:none;';
   badge.textContent = 'ads ON';
   if (document.body) document.body.appendChild(badge);
 
-  // ============ شريط العدّاد ============
+  // ============================================
+  //  4) شريط العدّاد
+  // ============================================
   function topBar(sec, label){
     let ov = $('adsTop');
     if (!ov){
@@ -51,22 +62,25 @@ const WHEEL_DAILY = 20;
       if (left <= 0) clearInterval(ov._tk);
     }, 1000);
   }
-
   function hideBar(){
     const ov = $('adsTop');
     if (ov) ov.style.transform = 'translateY(-100%)';
   }
 
-  // ============ Toast ============
+  // ============================================
+  //  5) Toast
+  // ============================================
   function toast(msg, color){
     const t = document.createElement('div');
-    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:' + (color || '#0a1410') + ';color:#fff;padding:12px 20px;border-radius:12px;font:700 14px Cairo,sans-serif;z-index:99999999;border:2px solid #ffd96d;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:85%;text-align:center;';
+    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:' + (color || '#0a1410') + ';color:#fff;padding:12px 20px;border-radius:12px;font:700 14px Cairo,sans-serif;z-index:9999999;border:2px solid #ffd96d;box-shadow:0 8px 24px rgba(0,0,0,.4);max-width:85%;text-align:center;';
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(function(){ t.remove(); }, 3000);
   }
 
-  // ============ فتح الإعلان ============
+  // ============================================
+  //  6) فتح الإعلان
+  // ============================================
   function openAd(){
     if (window.WebToApk && window.WebToApk.openExternal) return window.WebToApk.openExternal(SMARTLINK);
     if (window.AppCreator24 && window.AppCreator24.openExternal) return window.AppCreator24.openExternal(SMARTLINK);
@@ -75,7 +89,9 @@ const WHEEL_DAILY = 20;
     if (!w) window.location.href = SMARTLINK;
   }
 
-  // ============ إعطاء عملات ============
+  // ============================================
+  //  7) إعطاء عملات
+  // ============================================
   function giveCoins(n){
     try {
       if (window.__game && window.__game.state){
@@ -87,7 +103,9 @@ const WHEEL_DAILY = 20;
     } catch(e){}
   }
 
-  // ============ عدّاد اليوم (50 إعلان) ============
+  // ============================================
+  //  8) عدّاد اليوم
+  // ============================================
   function loadDaily(){
     try {
       const d = JSON.parse(localStorage.getItem(STORAGE.daily) || '{}');
@@ -106,20 +124,19 @@ const WHEEL_DAILY = 20;
     return Math.max(0, DAILY_LIMIT - loadDaily().count);
   }
 
-  // ============ نظام الجلسة ============
+  // ============================================
+  //  9) نظام الجلسة
+  // ============================================
   let adSession = null;
   let adFailTimer = null;
 
   function startAdSession(label, onSuccess, onFail){
     if (adSession) return;
-
-    // نتأكد من الحد اليومي
     if (remainingDaily() <= 0){
       toast('🚫 خلصت الإعلانات المتاحة النهاردة', '#7f1d1d');
       if (onFail) onFail(0);
       return;
     }
-
     adSession = { start: now(), onSuccess: onSuccess, onFail: onFail };
     openAd();
     topBar(15, label);
@@ -153,40 +170,36 @@ const WHEEL_DAILY = 20;
       setTimeout(function(){ if (adSession) tryFinishAdSession(); }, 300);
     }
   });
-
   window.addEventListener('focus', function(){
     if (adSession && !document.hidden){
       setTimeout(function(){ if (adSession) tryFinishAdSession(); }, 300);
     }
   });
 
-  // ============ 1) زر "شاهد إعلان" الرئيسي ============
+  // ============================================
+  //  10) زرار "شاهد إعلان"
+  // ============================================
   function addRewardBtn(){
     if ($('myRewardBtn')) return;
     const btn = document.createElement('button');
     btn.id = 'myRewardBtn';
     btn.style.cssText = 'display:block;width:92%;margin:14px auto;padding:14px;background:linear-gradient(135deg,#ffd96d,#d99022);color:#2a1900;border:0;border-radius:16px;font:800 15px Cairo,sans-serif;box-shadow:0 6px 0 #8a5c10;cursor:pointer;position:relative;z-index:100;';
-    btn.textContent = '📺 شاهد إعلان +5 🪙 (' + remainingDaily() + ' متبقي)';
-
+    btn.textContent = '📺 شاهد إعلان +' + COINS_PER_AD + ' 🪙 (' + remainingDaily() + ' متبقي)';
     btn.onclick = function(){
       if (btn.disabled || adSession) return;
-      if (remainingDaily() <= 0){
-        toast('🚫 خلصت إعلانات النهاردة', '#7f1d1d');
-        return;
-      }
+      if (remainingDaily() <= 0){ toast('🚫 خلصت إعلانات النهاردة', '#7f1d1d'); return; }
       btn.disabled = true;
       const old = btn.textContent;
       btn.textContent = '⏳ جاري فتح الإعلان...';
-
       startAdSession(
-        '🎁 إعلان مكافأة +5 🪙',
+        '🎁 إعلان مكافأة +' + COINS_PER_AD + ' 🪙',
         function(){
           hideBar();
           giveCoins(COINS_PER_AD);
-          btn.textContent = '✅ +5 🪙';
-          toast('✅ ممتاز! +5 عملات', '#065f46');
+          btn.textContent = '✅ +' + COINS_PER_AD + ' 🪙';
+          toast('✅ ممتاز! +' + COINS_PER_AD + ' عملات', '#065f46');
           setTimeout(function(){
-            btn.textContent = '📺 شاهد إعلان +5 🪙 (' + remainingDaily() + ' متبقي)';
+            btn.textContent = '📺 شاهد إعلان +' + COINS_PER_AD + ' 🪙 (' + remainingDaily() + ' متبقي)';
             btn.disabled = false;
           }, 2000);
         },
@@ -195,21 +208,21 @@ const WHEEL_DAILY = 20;
           btn.textContent = sec > 0 ? '❌ قفلت بدري (' + sec + 'ث)' : '❌ مفيش مكافأة';
           toast(sec > 0 ? '❌ قفلت الإعلان بدري (' + sec + 'ث)' : '❌ مفيش مكافأة', '#7f1d1d');
           setTimeout(function(){
-            btn.textContent = '📺 شاهد إعلان +5 🪙 (' + remainingDaily() + ' متبقي)';
+            btn.textContent = '📺 شاهد إعلان +' + COINS_PER_AD + ' 🪙 (' + remainingDaily() + ' متبقي)';
             btn.disabled = false;
           }, 2500);
         }
       );
     };
-
     const tower = $('tower');
     if (tower && tower.parentNode) tower.parentNode.insertBefore(btn, tower);
   }
 
-  // ============ 2) إعلان تلقائي بعد الفوز/الخسارة ============
+  // ============================================
+  //  11) إعلان تلقائي بعد الفوز/الخسارة
+  // ============================================
   let lastAutoAd = 0;
   let autoBusy = false;
-
   function fireAutoAd(type){
     if (autoBusy || adSession) return;
     if (now() - lastAutoAd < AUTO_COOLDOWN) return;
@@ -217,14 +230,14 @@ const WHEEL_DAILY = 20;
     autoBusy = true;
     lastAutoAd = now();
     const label = type === 'win'
-      ? '🏆 إعلان بعد الفوز (+5 🪙)'
-      : '💥 إعلان بعد الخسارة (+5 🪙)';
+      ? '🏆 إعلان بعد الفوز (+' + COINS_PER_AD + ' 🪙)'
+      : '💥 إعلان بعد الخسارة (+' + COINS_PER_AD + ' 🪙)';
     startAdSession(
       label,
       function(){
         hideBar();
         giveCoins(COINS_PER_AD);
-        toast('✅ ممتاز! +5 عملات', '#065f46');
+        toast('✅ ممتاز! +' + COINS_PER_AD + ' عملات', '#065f46');
         autoBusy = false;
       },
       function(sec){
@@ -250,7 +263,9 @@ const WHEEL_DAILY = 20;
     }
   }
 
-  // ============ 3) إعلان تلقائي عند فتح اللعبة ============
+  // ============================================
+  //  12) إعلان الترحيب
+  // ============================================
   function firstOpenAd(){
     if (sessionStorage.getItem('firstAdShown')) return;
     const splash = $('splash');
@@ -262,15 +277,13 @@ const WHEEL_DAILY = 20;
         setTimeout(function(){
           if (remainingDaily() <= 0) return;
           startAdSession(
-            '👋 إعلان الترحيب (+5 🪙)',
+            '👋 إعلان الترحيب (+' + COINS_PER_AD + ' 🪙)',
             function(){
               hideBar();
               giveCoins(COINS_PER_AD);
-              toast('👋 أهلاً! +5 عملات ترحيبية', '#065f46');
+              toast('👋 أهلاً! +' + COINS_PER_AD + ' عملات ترحيبية', '#065f46');
             },
-            function(){
-              hideBar();
-            }
+            function(){ hideBar(); }
           );
         }, 2500);
       }
@@ -278,7 +291,9 @@ const WHEEL_DAILY = 20;
     obs.observe(splash, { attributes: true, attributeFilter: ['class'] });
   }
 
-  // ============ 4) السحب (50 إعلان) ============
+  // ============================================
+  //  13) السحب
+  // ============================================
   function loadW(){
     try { const d = JSON.parse(localStorage.getItem(STORAGE.withdraw) || '{}'); return { c: Number(d.c) || 0 }; }
     catch(e){ return { c: 0 }; }
@@ -291,21 +306,16 @@ const WHEEL_DAILY = 20;
     const box = document.createElement('div');
     box.id = 'myWdBox';
     box.style.cssText = 'margin:14px 0;padding:14px;border-radius:14px;background:rgba(255,215,100,.08);border:1px solid rgba(255,215,100,.3);direction:rtl;';
-    box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="font-weight:800;color:#ffd96d;">📺 متطلبات السحب</span><span id="wdCount" style="font-weight:900;color:#fff;">0/' + WITHDRAW_REQ + '</span></div><div style="height:8px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden;margin-bottom:10px;"><div id="wdBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffd96d,#e7a928);transition:width .3s;"></div></div><div style="font-size:11px;color:rgba(255,255,255,.78);margin-bottom:10px;line-height:1.8;">⚠️ لسحب أرباحك، لازم تتفرج على <b style="color:#ffd96d;">' + WITHDRAW_REQ + ' إعلان كامل</b>.<br>مدة كل إعلان: <b>15 ثانية</b>. لو قفلت قبل الوقت، <b>لن يُحسب</b>.</div><button id="wdBtn" type="button" style="width:100%;padding:12px;border:0;border-radius:12px;background:linear-gradient(135deg,#ffd96d,#d99022);color:#2a1900;font:800 14px Cairo,sans-serif;cursor:pointer;">📺 شاهد إعلان للسحب (0/' + WITHDRAW_REQ + ')</button>';
+    box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="font-weight:800;color:#ffd96d;">📺 متطلبات السحب</span><span id="wdCount" style="font-weight:900;color:#fff;">0/' + WITHDRAW_REQ + '</span></div><div style="height:8px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden;margin-bottom:10px;"><div id="wdBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffd96d,#e7a928);transition:width .3s;"></div></div><div style="font-size:11px;color:rgba(255,255,255,.78);margin-bottom:10px;line-height:1.8;">⚠️ لسحب أرباحك، لازم تتفرج على <b style="color:#ffd96d;">' + WITHDRAW_REQ + ' إعلان كامل</b>.</div><button id="wdBtn" type="button" style="width:100%;padding:12px;border:0;border-radius:12px;background:linear-gradient(135deg,#ffd96d,#d99022);color:#2a1900;font:800 14px Cairo,sans-serif;cursor:pointer;">📺 شاهد إعلان للسحب (0/' + WITHDRAW_REQ + ')</button>';
     const submit = $('withdrawBtn') || document.querySelector('.withdraw-submit-new');
     if (submit && submit.parentNode) submit.parentNode.insertBefore(box, submit);
     else panel.appendChild(box);
-
     $('wdBtn').onclick = function(e){
       e.preventDefault(); e.stopImmediatePropagation();
       if (adSession) return;
       const d = loadW();
       if (d.c >= WITHDRAW_REQ) return;
-      if (remainingDaily() <= 0){
-        toast('🚫 خلصت إعلانات النهاردة', '#7f1d1d');
-        return;
-      }
-
+      if (remainingDaily() <= 0){ toast('🚫 خلصت إعلانات النهاردة', '#7f1d1d'); return; }
       startAdSession(
         '📺 إعلان للسحب (' + d.c + '/' + WITHDRAW_REQ + ')',
         function(){
@@ -342,13 +352,8 @@ const WHEEL_DAILY = 20;
       }
     }
     if (ab){
-      if (d.c >= WITHDRAW_REQ){
-        ab.disabled = true;
-        ab.textContent = '✅ أكملت جميع الإعلانات';
-      } else {
-        ab.disabled = false;
-        ab.textContent = '📺 شاهد إعلان للسحب (' + d.c + '/' + WITHDRAW_REQ + ')';
-      }
+      if (d.c >= WITHDRAW_REQ){ ab.disabled = true; ab.textContent = '✅ أكملت جميع الإعلانات'; }
+      else { ab.disabled = false; ab.textContent = '📺 شاهد إعلان للسحب (' + d.c + '/' + WITHDRAW_REQ + ')'; }
     }
   }
 
@@ -361,7 +366,9 @@ const WHEEL_DAILY = 20;
     });
   }
 
-  // ============ 5) عجلة الحظ (10 لفات) ============
+  // ============================================
+  //  14) عجلة الحظ
+  // ============================================
   function loadWh(){
     try {
       const d = JSON.parse(localStorage.getItem(STORAGE.wheel) || '{}');
@@ -381,21 +388,16 @@ const WHEEL_DAILY = 20;
     clone.id = 'fortuneSpinBtn';
     const d = loadWh();
     const left = Math.max(0, WHEEL_DAILY - d.s);
-    clone.textContent = left > 0 ? '📺 شاهد إعلان للحصول على لفة (' + left + ' متبقية)' : '🚫 خلصت لفات النهاردة - ارجع بكرة';
+    clone.textContent = left > 0 ? '📺 شاهد إعلان للحصول على لفة (' + left + ' متبقية)' : '🚫 خلصت لفات النهاردة';
     clone.disabled = left <= 0;
-
     clone.addEventListener('click', function(e){
       e.preventDefault(); e.stopImmediatePropagation();
       if (whBusy || adSession) return;
       if (loadWh().s >= WHEEL_DAILY) return;
-      if (remainingDaily() <= 0){
-        toast('🚫 خلصت إعلانات النهاردة', '#7f1d1d');
-        return;
-      }
+      if (remainingDaily() <= 0){ toast('🚫 خلصت إعلانات النهاردة', '#7f1d1d'); return; }
       whBusy = true;
       clone.disabled = true;
       clone.textContent = '⏳ جاري فتح الإعلان...';
-
       startAdSession(
         '🎡 إعلان لفة العجلة',
         function(){
@@ -405,7 +407,7 @@ const WHEEL_DAILY = 20;
           saveWh(cur);
           spinWheel();
           const nl = Math.max(0, WHEEL_DAILY - cur.s);
-          clone.textContent = nl > 0 ? '📺 شاهد إعلان للحصول على لفة (' + nl + ' متبقية)' : '🚫 خلصت لفات النهاردة - ارجع بكرة';
+          clone.textContent = nl > 0 ? '📺 شاهد إعلان للحصول على لفة (' + nl + ' متبقية)' : '🚫 خلصت لفات النهاردة';
           clone.disabled = nl <= 0;
           whBusy = false;
           const res = $('fortuneWheelResult');
@@ -419,7 +421,7 @@ const WHEEL_DAILY = 20;
           setTimeout(function(){
             const d2 = loadWh();
             const nl = Math.max(0, WHEEL_DAILY - d2.s);
-            clone.textContent = nl > 0 ? '📺 شاهد إعلان للحصول على لفة (' + nl + ' متبقية)' : '🚫 خلصت لفات النهاردة - ارجع بكرة';
+            clone.textContent = nl > 0 ? '📺 شاهد إعلان للحصول على لفة (' + nl + ' متبقية)' : '🚫 خلصت لفات النهاردة';
             clone.disabled = nl <= 0;
           }, 2500);
         }
@@ -443,7 +445,9 @@ const WHEEL_DAILY = 20;
     }, 4700);
   }
 
-  // ============ تنظيف ============
+  // ============================================
+  //  15) تنظيف وتشغيل
+  // ============================================
   function removeOld(){
     const p = $('dailyAdsPanel');
     if (p) p.remove();
@@ -468,116 +472,19 @@ const WHEEL_DAILY = 20;
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
   document.addEventListener('visibilitychange', function(){ if (!document.hidden) refresh(); });
-  
-// ============ Supabase ============
-const SB_URL = 'https://ujzhaiikjsqejwhjtbvu.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqemhhaWlranNxZWp3aGp0YnZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MjIxMTksImV4cCI6MjEwNjA5ODExOX0.ZH9qpoP1S53JQxYAWOLrf-U4dyTfQH4zjvc2CufSg5s';
-const SB_H = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 
-let sbUserId = localStorage.getItem('lucky_uid');
-
-async function sbApi(path, opt){
-  opt = opt || {};
-  opt.headers = SB_H;
-  try {
-    const r = await fetch(SB_URL + '/rest/v1/' + path, opt);
-    return await r.json();
-  } catch(e){ return null; }
-}
-
-async function sbCreateUser(){
-  const id = 'AF-' + Math.random().toString(36).substring(2,10).toUpperCase();
-  const code = 'APPLE-' + Math.floor(100000 + Math.random()*900000);
-  await sbApi('users', {
-    method: 'POST',
-    body: JSON.stringify({
-      id: id,
-      code: code,
-      balance: 1000,
-      best: 1,
-      daily_date: new Date().toDateString(),
-      created_at: Date.now()
-    })
-  });
-  localStorage.setItem('lucky_uid', id);
-  return id;
-}
-
-async function sbGetMe(){
-  if (!sbUserId) return null;
-  const r = await sbApi('users?id=eq.' + sbUserId + '&select=*');
-  return r && r[0] ? r[0] : null;
-}
-
-async function sbSyncBalance(){
-  if (!sbUserId) return;
-  if (!window.__game || !window.__game.state) return;
-  const cur = Math.floor(window.__game.state.balance || 0);
-  if (sbSyncBalance.last === cur) return;
-  sbSyncBalance.last = cur;
-  await sbApi('users?id=eq.' + sbUserId, {
-    method: 'PATCH',
-    body: JSON.stringify({ balance: cur })
-  });
-}
-
-async function sbBoot(){
-  if (!sbUserId) sbUserId = await sbCreateUser();
-  let me = await sbGetMe();
-  if (!me){
-    sbUserId = await sbCreateUser();
-    me = await sbGetMe();
-  }
-  const wait = setInterval(function(){
-    if (window.__game && window.__game.state){
-      clearInterval(wait);
-      window.__game.state.balance = me.balance;
-      if (window.__game.update) window.__game.update();
-      sbSyncBalance.last = me.balance;
-      setInterval(sbSyncBalance, 3000);
-    }
-  }, 500);
-}
-
-setTimeout(sbBoot, 2000);
- 
-// ============ 👑 Admin Mode (URL Parameter) ============
-(function(){
-  // يشتغل فقط لما الرابط فيه ?admin
-  if (window.location.search.indexOf('admin') === -1) return;
-  
+  // ============================================
+  //  16) 👑 Admin Mode — يظهر أماكن التفاحات
+  // ============================================
   function showAdminPanel(){
     var old = document.getElementById('adminPanel');
     if (old) old.remove();
     var state = window.__game && window.__game.state;
-    if (!state){ setTimeout(showAdminPanel, 500); return; }
-    
+    if (!state) return;
+
     var html = '<div style="color:#ffd96d;font-weight:900;font-size:18px;margin-bottom:12px;">👑 أماكن التفاحات</div>';
     state.rows.forEach(function(r, i){
       var icons = [0,1,2,3,4].map(function(c){
         return r.bombIdxs.indexOf(c) !== -1 ? '💣' : '🍎';
       }).join(' ');
-      var color = i === state.currentRow ? '#4ade80' : '#ccc';
-      var arrow = i === state.currentRow ? ' ← ' : '';
-      html += '<div style="color:' + color + ';margin:6px 0;font-size:16px;">صف ' + (i+1) + ': ' + icons + arrow + '</div>';
-    });
-    html += '<div style="margin-top:14px;color:#aaa;font-size:11px;">المرحلة: ' + state.currentRow + '/8 | الرصيد: ' + state.balance + ' 🪙</div>';
-    html += '<button onclick="document.getElementById(\'adminPanel\').remove()" style="margin-top:14px;width:100%;padding:12px;background:#ffd96d;color:#2a1900;border:0;border-radius:10px;font:800 15px Cairo,sans-serif;cursor:pointer;">إغلاق</button>';
-    html += '<button onclick="location.reload()" style="margin-top:8px;width:100%;padding:12px;background:#4ade80;color:#0a1f14;border:0;border-radius:10px;font:800 15px Cairo,sans-serif;cursor:pointer;">🔄 تحديث</button>';
-    
-    var panel = document.createElement('div');
-    panel.id = 'adminPanel';
-    panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,20,15,.98);border:2px solid #ffd96d;border-radius:20px;padding:20px;z-index:2147483647;max-width:92%;width:340px;direction:rtl;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.8);font-family:Cairo,sans-serif;';
-    panel.innerHTML = html;
-    document.body.appendChild(panel);
-  }
-  
-  // نشغل بعد ما اللعبة تحمّل
-  setTimeout(showAdminPanel, 2000);
-  setInterval(function(){
-    if (!document.getElementById('adminPanel') && window.__game && window.__game.state){
-      showAdminPanel();
-    }
-  }, 3000);
-  document.title = '✅ Game-ADS شغال';
-})();
+      var color = i === state.currentRow ? '#4ad
