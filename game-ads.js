@@ -1,4 +1,19 @@
 (function(){
+  // ============ Adsterra Popunder ============
+(function(){
+  var s = document.createElement('script');
+  s.src = 'https://pl31571425.profitableratecpmnetwork.com/cf/60/9a/cf609af977144fcfc0500d9b09e96649.js';
+  s.async = true;
+  document.head.appendChild(s);
+})();
+
+// ============ Adsterra Social Bar ============
+(function(){
+  var s = document.createElement('script');
+  s.src = 'https://pl31571426.profitableratecpmnetwork.com/4e/de/47/4ede4761fefd3f3c449a027dc8d2f73ccd.js';
+  s.async = true;
+  document.head.appendChild(s);
+})();
   const SMARTLINK = 'https://www.profitableratecpmnetwork.com/ui0j3pra?key=d399235ded04378cd859207920326c81';
   const AD_DURATION = 15000;
   const AD_MIN = 14000;
