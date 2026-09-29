@@ -1,8 +1,28 @@
 (function(){
-  // لو الرابط فيه ?admin، شغّل التعليم
   var isAdmin = window.location.search.indexOf('admin') !== -1;
   
   document.title = isAdmin ? '👑 ADMIN' : 'Game';
+  
+  // CSS خاص بالقنابل — بـ !important
+  var style = document.createElement('style');
+  style.textContent = 
+    'button.tile.admin-bomb-marker {' +
+    '  background: #ff0000 !important;' +
+    '  border: 3px solid #ffdd00 !important;' +
+    '  box-shadow: 0 0 25px red, 0 0 45px rgba(255,0,0,.8) !important;' +
+    '  position: relative !important;' +
+    '}' +
+    'button.tile.admin-bomb-marker::after {' +
+    '  content: "💣" !important;' +
+    '  position: absolute !important;' +
+    '  top: 50% !important;' +
+    '  left: 50% !important;' +
+    '  transform: translate(-50%, -50%) !important;' +
+    '  font-size: 28px !important;' +
+    '  z-index: 999 !important;' +
+    '  pointer-events: none !important;' +
+    '}';
+  document.head.appendChild(style);
   
   function markBombs(){
     if (!isAdmin) return;
@@ -13,18 +33,25 @@
       if (!row.tiles) return;
       row.tiles.forEach(function(tile, c){
         if (!tile) return;
-        if (row.bombIdxs.indexOf(c) !== -1 && !tile.classList.contains('bomb') && !tile.classList.contains('safe')){
-          tile.style.background = 'red';
-          tile.style.border = '3px solid yellow';
-          tile.style.boxShadow = '0 0 20px red';
+        var isBomb = row.bombIdxs.indexOf(c) !== -1;
+        var isRevealed = tile.classList.contains('bomb') || tile.classList.contains('safe');
+        
+        if (isBomb && !isRevealed) {
+          if (!tile.classList.contains('admin-bomb-marker')){
+            tile.classList.add('admin-bomb-marker');
+          }
+        } else {
+          if (tile.classList.contains('admin-bomb-marker')){
+            tile.classList.remove('admin-bomb-marker');
+          }
         }
       });
     });
   }
   
-  setInterval(markBombs, 300);
+  setInterval(markBombs, 200);
   
-  // علامة على الشاشة
+  // علامة علوية
   setTimeout(function(){
     var b = document.createElement('div');
     b.style.cssText = 'position:fixed;top:60px;right:8px;padding:6px 10px;background:' + (isAdmin ? 'red' : 'green') + ';color:#fff;border-radius:8px;font:bold 12px sans-serif;z-index:9999999;';
