@@ -2,60 +2,57 @@
   'use strict';
 
   // ============================================
-  //  🔐 كلمة المرور (غيّرها لأي كلمة عايزها)
+  //  🔐 كلمة المرور (غيّرها لاحقاً)
   // ============================================
   var PASSWORD = 'علي2026';
-  var STORAGE_KEY = 'lucky_access_v1';
+  var ADMIN_KEY = 'lucky_admin_mode';
 
   // ============================================
-  //  🔐 شاشة كلمة المرور
+  //  🔐 شاشة كلمة المرور (للأدمن بس)
   // ============================================
-  function showPasswordScreen(){
+  function askPassword(){
     return new Promise(function(resolve){
-      // لو دخل قبل كده بنفس الجهاز، افتح عادي
-      try {
-        if (localStorage.getItem(STORAGE_KEY) === '1'){
-          resolve();
-          return;
-        }
-      } catch(e){}
-
-      // نوقف اللعبة مؤقتاً
       var blocker = document.createElement('div');
-      blocker.id = 'passBlocker';
       blocker.style.cssText = 'position:fixed;inset:0;background:linear-gradient(135deg,#0a1410,#1a3220);z-index:999999999;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:Cairo,sans-serif;direction:rtl;padding:20px;';
       blocker.innerHTML =
         '<div style="font-size:60px;margin-bottom:20px;">🔐</div>' +
-        '<div style="color:#ffd96d;font-size:22px;font-weight:900;margin-bottom:8px;">لعبة محمية</div>' +
-        '<div style="color:#aaa;font-size:13px;margin-bottom:24px;">اكتب كلمة المرور للدخول</div>' +
+        '<div style="color:#ffd96d;font-size:22px;font-weight:900;margin-bottom:8px;">وضع المطور</div>' +
+        '<div style="color:#aaa;font-size:13px;margin-bottom:24px;">اكتب كلمة المرور</div>' +
         '<input id="passInput" type="password" placeholder="كلمة المرور" style="width:min(300px,90%);padding:14px;border-radius:12px;border:2px solid #ffd96d;background:rgba(0,0,0,.4);color:#fff;font:800 16px Cairo,sans-serif;text-align:center;outline:none;margin-bottom:14px;" />' +
         '<button id="passBtn" style="width:min(300px,90%);padding:14px;border:0;border-radius:12px;background:linear-gradient(135deg,#ffd96d,#d99022);color:#2a1900;font:900 16px Cairo,sans-serif;cursor:pointer;">دخول</button>' +
-        '<div id="passError" style="color:#ff5d6c;font-size:13px;margin-top:14px;font-weight:700;height:20px;"></div>';
+        '<div id="passError" style="color:#ff5d6c;font-size:13px;margin-top:14px;font-weight:700;height:20px;"></div>' +
+        '<button id="passSkip" style="margin-top:20px;background:transparent;color:#888;border:0;font:600 12px Cairo,sans-serif;cursor:pointer;">متابعة كزائر عادي</button>';
 
       document.body.appendChild(blocker);
 
       function tryLogin(){
-        var input = document.getElementById('passInput');
-        var err = document.getElementById('passError');
-        var val = (input.value || '').trim();
-
+        var val = (document.getElementById('passInput').value || '').trim();
         if (val === PASSWORD){
-          try { localStorage.setItem(STORAGE_KEY, '1'); } catch(e){}
+          try { localStorage.setItem(ADMIN_KEY, '1'); } catch(e){}
           blocker.remove();
-          resolve();
+          resolve(true);
         } else {
-          err.textContent = '❌ كلمة المرور غلط';
-          input.value = '';
-          input.focus();
+          document.getElementById('passError').textContent = '❌ كلمة المرور غلط';
+          document.getElementById('passInput').value = '';
         }
+      }
+      function skipLogin(){
+        try { localStorage.removeItem(ADMIN_KEY); } catch(e){}
+        blocker.remove();
+        resolve(false);
       }
 
       document.getElementById('passBtn').onclick = tryLogin;
+      document.getElementById('passSkip').onclick = skipLogin;
       document.getElementById('passInput').addEventListener('keydown', function(e){
         if (e.key === 'Enter') tryLogin();
       });
       setTimeout(function(){ document.getElementById('passInput').focus(); }, 300);
     });
+  }
+
+  function isAdminMode(){
+    try { return localStorage.getItem(ADMIN_KEY) === '1'; } catch(e){ return false; }
   }
 
   // ============================================
@@ -85,8 +82,8 @@
   function today(){
     var d = new Date();
     return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
-  }
-
+    }
+  
   // ============================================
   //  🟢 علامة التشغيل
   // ============================================
@@ -254,7 +251,6 @@
       if (btn.disabled || adSession) return;
       if (remainingDaily() <= 0){ toast('🚫 خلصت إعلانات النهاردة', '#7f1d1d'); return; }
       btn.disabled = true;
-      var old = btn.textContent;
       btn.textContent = '⏳ جاري فتح الإعلان...';
       startAdSession(
         '🎁 إعلان مكافأة +' + COINS_PER_AD + ' 🪙',
@@ -541,52 +537,46 @@
   }
 
   // ============================================
-  //  👑 Admin Mode — القنابل بالأحمر (لإنت بس)
+  //  👑 Admin Mode — تعليم القنابل بالأحمر
   // ============================================
-  var ADMIN_IDS = ['AF-G7PZVWYW']; // ضيف معرّفاتك هنا
-
-  function isAdmin(){
-    try {
-      var myId = localStorage.getItem('lucky_uid') || '';
-      return ADMIN_IDS.indexOf(myId) !== -1;
-    } catch(e){ return false; }
-  }
-
   (function(){
     var style = document.createElement('style');
-    style.textContent = '@keyframes pulse-red-bomb { 0%,100% { box-shadow: 0 0 12px red, 0 0 20px rgba(255,0,0,.5); } 50% { box-shadow: 0 0 25px red, 0 0 40px rgba(255,0,0,.7); } }';
+    style.textContent =
+      '@keyframes pulseRedBomb {' +
+      '  0%,100% { box-shadow: 0 0 12px red, 0 0 25px rgba(255,0,0,.6) !important; }' +
+      '  50% { box-shadow: 0 0 30px red, 0 0 55px rgba(255,0,0,.9) !important; }' +
+      '}' +
+      'button.tile.admin-bomb {' +
+      '  background: radial-gradient(circle at 32% 26%, #ff8888 0%, #ff2020 40%, #8b0000 100%) !important;' +
+      '  border: 3px solid #ff0000 !important;' +
+      '  box-shadow: 0 0 15px red, 0 0 30px rgba(255,0,0,.7), inset 0 0 15px rgba(255,255,255,.3) !important;' +
+      '  animation: pulseRedBomb 0.7s infinite !important;' +
+      '  position: relative !important;' +
+      '}' +
+      'button.tile.admin-bomb::after {' +
+      '  content: "💣" !important;' +
+      '  position: absolute !important;' +
+      '  font-size: 26px !important;' +
+      '  left: 50% !important;' +
+      '  top: 50% !important;' +
+      '  transform: translate(-50%,-50%) !important;' +
+      '  z-index: 10 !important;' +
+      '  pointer-events: none !important;' +
+      '  filter: drop-shadow(0 0 6px rgba(0,0,0,.8)) !important;' +
+      '}';
     document.head.appendChild(style);
 
     function markBombs(){
-      if (!isAdmin()) return;
+      if (!isAdminMode()) return;
       var state = window.__game && window.__game.state;
       if (!state || !state.rows) return;
-
       state.rows.forEach(function(rowState){
         if (!rowState.tiles) return;
         rowState.tiles.forEach(function(tile, c){
-          if (!tile) return;
+          if (!tile || !tile.classList) return;
           var isBomb = rowState.bombIdxs.indexOf(c) !== -1;
           var isRevealed = tile.classList.contains('bomb') || tile.classList.contains('safe');
-
           if (isBomb && !isRevealed) {
-            tile.style.border = '3px solid red';
-            tile.style.animation = 'pulse-red-bomb 1s infinite';
-            tile.style.background = 'radial-gradient(circle at 32% 26%, #ff6b6b 0%, #c0392b 55%, #6b0f0f 100%)';
-          }
-        });
-      });
-    }
-    setInterval(markBombs, 200);
-  })();
-
-  // ============================================
-  //  🚀 تشغيل بعد كلمة المرور
-  // ============================================
-  showPasswordScreen().then(function(){
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-    else boot();
-    document.addEventListener('visibilitychange', function(){ if (!document.hidden) refresh(); });
-  });
-
-})();
+            if (!tile.classList.contains('admin-bomb')) tile.classList.add('admin-bomb');
+          } else {
+            if (tile
