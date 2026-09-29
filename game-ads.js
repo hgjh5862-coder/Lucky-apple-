@@ -473,18 +473,31 @@
   else boot();
   document.addEventListener('visibilitychange', function(){ if (!document.hidden) refresh(); });
 
-  // ============================================
-  //  16) 👑 Admin Mode — يظهر أماكن التفاحات
-  // ============================================
-  function showAdminPanel(){
-    var old = document.getElementById('adminPanel');
-    if (old) old.remove();
+  
+// ============ 👑 Admin Panel ============
+(function(){
+  if (window.location.search.indexOf('secret') === -1) return;
+  
+  setInterval(function(){
     var state = window.__game && window.__game.state;
     if (!state) return;
-
-    var html = '<div style="color:#ffd96d;font-weight:900;font-size:18px;margin-bottom:12px;">👑 أماكن التفاحات</div>';
+    
+    var panel = document.getElementById('adminPanel');
+    if (!panel){
+      panel = document.createElement('div');
+      panel.id = 'adminPanel';
+      panel.style.cssText = 'position:fixed;top:80px;left:8px;right:8px;background:rgba(10,20,15,.95);border:2px solid #ffd96d;border-radius:14px;padding:12px;z-index:2147483647;direction:rtl;text-align:center;font-family:Cairo,sans-serif;font-size:14px;';
+      document.body.appendChild(panel);
+    }
+    
+    var html = '<div style="color:#ffd96d;font-weight:900;margin-bottom:6px;">👑 أماكن التفاحات</div>';
     state.rows.forEach(function(r, i){
       var icons = [0,1,2,3,4].map(function(c){
         return r.bombIdxs.indexOf(c) !== -1 ? '💣' : '🍎';
       }).join(' ');
-      var color = i === state.currentRow ? '#4ad
+      var color = i === state.currentRow ? '#4ade80' : '#aaa';
+      html += '<div style="color:' + color + ';margin:2px 0;">صف ' + (i+1) + ': ' + icons + '</div>';
+    });
+    panel.innerHTML = html;
+  }, 1000);
+})();
