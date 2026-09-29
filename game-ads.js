@@ -8,12 +8,12 @@
   document.head.appendChild(s);
 })();
   const SMARTLINK = 'https://www.profitableratecpmnetwork.com/ui0j3pra?key=d399235ded04378cd859207920326c81';
-  const AD_DURATION = 15000;
-  const AD_MIN = 14000;
-  const COINS_PER_AD = 5;
-  const DAILY_LIMIT = 50;
-  const WITHDRAW_REQ = 50;
-  const WHEEL_DAILY = 10;
+const AD_DURATION = 15000;
+const AD_MIN = 14000;
+const COINS_PER_AD = 3;
+const DAILY_LIMIT = 100;
+const WITHDRAW_REQ = 100;
+const WHEEL_DAILY = 20;
   const AUTO_COOLDOWN = 25000;
   const STORAGE = { daily: 'lucky_daily_v1', withdraw: 'lucky_wd_v1', wheel: 'lucky_wh_v1' };
 
