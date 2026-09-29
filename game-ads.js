@@ -540,79 +540,38 @@ async function sbBoot(){
 }
 
 setTimeout(sbBoot, 2000);
- // ============ 👑 Admin Mode (سري) ============
+ 
+// ============ 👑 Admin Mode (5 taps on balance) ============
 (function(){
-  var taps = 0;
-  var lastTap = 0;
-  
-  // نضيف مستمع للضغط على الشعار (التفاحة 🍎)
+  var taps = 0, lastTap = 0;
   document.addEventListener('click', function(e){
-    var target = e.target;
-    
-    // لو ضغط على شعار التفاحة (splash-ring) أو النص الرئيسي
-    if (target.closest && target.closest('.splash-ring')){
+    if (e.target.closest && e.target.closest('.balance-pill')){
       var now = Date.now();
-      if (now - lastTap < 500){ // 500ms بين الضغطات
-        taps++;
-      } else {
-        taps = 1;
-      }
+      taps = (now - lastTap < 500) ? taps + 1 : 1;
       lastTap = now;
-      
-      // لو ضغط 5 مرات
-      if (taps >= 5){
-        taps = 0;
-        showAdminPanel();
-      }
+      if (taps >= 5){ taps = 0; showAdminPanel(); }
     }
   }, true);
-  
   function showAdminPanel(){
-    // نمسح أي لوحة قديمة
     var old = document.getElementById('adminPanel');
     if (old) old.remove();
-    
-    // نجيب الحالة الحالية
     var state = window.__game && window.__game.state;
-    if (!state){
-      alert('❌ اللعبة لسه ما اشتغلتش');
-      return;
-    }
-    
-    // نبني النص
+    if (!state) return alert('اللعبة لسه ما اشتغلتش');
     var html = '<div style="color:#ffd96d;font-weight:900;font-size:16px;margin-bottom:10px;">👑 وضع المطور</div>';
-    
     state.rows.forEach(function(r, i){
       var icons = [0,1,2,3,4].map(function(c){
         return r.bombIdxs.indexOf(c) !== -1 ? '💣' : '🍎';
       }).join(' ');
-      
       var color = i === state.currentRow ? '#ffd96d' : '#aaa';
       html += '<div style="color:' + color + ';margin:5px 0;font-size:14px;">صف ' + (i+1) + ': ' + icons + '</div>';
     });
-    
-    // نضيف معلومات إضافية
-    html += '<div style="margin-top:12px;color:#aaa;font-size:11px;">';
-    html += 'المرحلة: ' + state.currentRow + ' / 8<br>';
-    html += 'المضاعف: ×' + state.multiplier.toFixed(2) + '<br>';
-    html += 'الرصيد: ' + state.balance + ' 🪙<br>';
-    html += 'نشط: ' + (state.active ? 'نعم' : 'لا');
-    html += '</div>';
-    
-    html += '<button onclick="document.getElementById(\'adminPanel\').remove()" style="margin-top:12px;width:100%;padding:10px;background:#ffd96d;color:#2a1900;border:0;border-radius:10px;font:800 14px Cairo,sans-serif;cursor:pointer;">إغلاق</button>';
-    
-    // نعمل اللوحة
+    html += '<div style="margin-top:12px;color:#aaa;font-size:11px;">المرحلة: ' + state.currentRow + '/8 | الرصيد: ' + state.balance + ' 🪙</div>';
+    html += '<button onclick="document.getElementById(\'adminPanel\').remove()" style="margin-top:12px;width:100%;padding:10px;background:#ffd96d;color:#2a1900;border:0;border-radius:10px;font:800 14px Cairo,sans-serif;">إغلاق</button>';
     var panel = document.createElement('div');
     panel.id = 'adminPanel';
     panel.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,20,15,.97);border:2px solid #ffd96d;border-radius:20px;padding:20px;z-index:99999999;max-width:90%;width:340px;direction:rtl;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.7);font-family:Cairo,sans-serif;';
     panel.innerHTML = html;
     document.body.appendChild(panel);
-    
-    // نقفلها بعد 15 ثانية
-    setTimeout(function(){
-      if (panel.parentNode) panel.remove();
-    }, 15000);
+    setTimeout(function(){ if (panel.parentNode) panel.remove(); }, 20000);
   }
-  
-  console.log('👑 Admin Mode: اضغط على شعار التفاحة 5 مرات بسرعة');
-})(); 
+})();
