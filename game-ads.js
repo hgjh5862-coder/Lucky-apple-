@@ -1,11 +1,4 @@
 (function(){
-  // ============ Adsterra Popunder ============
-(function(){
-  var s = document.createElement('script');
-  s.src = 'https://pl31571425.profitableratecpmnetwork.com/cf/60/9a/cf609af977144fcfc0500d9b09e96649.js';
-  s.async = true;
-  document.head.appendChild(s);
-})();
 
 // ============ Adsterra Social Bar ============
 (function(){
