@@ -579,4 +579,5 @@ setTimeout(sbBoot, 2000);
       showAdminPanel();
     }
   }, 3000);
+  document.title = '✅ Game-ADS شغال';
 })();
