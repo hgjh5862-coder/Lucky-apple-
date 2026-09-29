@@ -1,4 +1,5 @@
 (function(){
+  document.title = '✅ WORKS';
   'use strict';
 
   // ============================================
