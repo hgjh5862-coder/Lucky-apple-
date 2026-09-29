@@ -541,28 +541,36 @@ async function sbBoot(){
 
 setTimeout(sbBoot, 2000);
  
-// ============ 👑 Admin Mode (5 taps top-left corner) ============
+// ============ 👑 Admin Mode ============
 (function(){
   var taps = 0, lastTap = 0;
+  
+  // نشوف أي عنصر فيه AF- أو معرّف الحساب
+  function checkForId(el){
+    if (!el) return false;
+    var text = (el.textContent || el.innerText || '').trim();
+    return text.indexOf('AF-') !== -1 || text.indexOf('معرّف') !== -1;
+  }
+  
   function handleTap(e){
-    // نجيب إحداثيات اللمس/الضغط
-    var x = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-    var y = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-    var w = window.innerWidth;
-    // الركن العلوي (يمين أو شمال)
-    var inCorner = (x < w * 0.35 || x > w * 0.65) && y < 100;
-    
-    if (!inCorner) { taps = 0; return; }
-    
-    var now = Date.now();
-    taps = (now - lastTap < 800) ? taps + 1 : 1;
-    lastTap = now;
-    
-    if (taps >= 5){
-      taps = 0;
-      showAdminPanel();
+    var el = e.target;
+    if (!el) return;
+    // نطّلع لفوق عشان نشوف لو في عنصر أب فيه AF-
+    for (var i = 0; i < 4 && el; i++){
+      if (checkForId(el)){
+        var now = Date.now();
+        taps = (now - lastTap < 1000) ? taps + 1 : 1;
+        lastTap = now;
+        if (taps >= 5){
+          taps = 0;
+          showAdminPanel();
+        }
+        return;
+      }
+      el = el.parentElement;
     }
   }
+  
   document.addEventListener('click', handleTap, true);
   document.addEventListener('touchstart', handleTap, true);
   
@@ -589,6 +597,4 @@ setTimeout(sbBoot, 2000);
     document.body.appendChild(panel);
     setTimeout(function(){ if (panel.parentNode) panel.remove(); }, 30000);
   }
-  
-  console.log('👑 Admin: اضغط 5 مرات في أعلى الشاشة');
 })();
