@@ -2,7 +2,64 @@
   'use strict';
 
   // ============================================
-  //  1) Adsterra Social Bar
+  //  🔐 كلمة المرور (غيّرها لأي كلمة عايزها)
+  // ============================================
+  var PASSWORD = 'علي2026';
+  var STORAGE_KEY = 'lucky_access_v1';
+
+  // ============================================
+  //  🔐 شاشة كلمة المرور
+  // ============================================
+  function showPasswordScreen(){
+    return new Promise(function(resolve){
+      // لو دخل قبل كده بنفس الجهاز، افتح عادي
+      try {
+        if (localStorage.getItem(STORAGE_KEY) === '1'){
+          resolve();
+          return;
+        }
+      } catch(e){}
+
+      // نوقف اللعبة مؤقتاً
+      var blocker = document.createElement('div');
+      blocker.id = 'passBlocker';
+      blocker.style.cssText = 'position:fixed;inset:0;background:linear-gradient(135deg,#0a1410,#1a3220);z-index:999999999;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:Cairo,sans-serif;direction:rtl;padding:20px;';
+      blocker.innerHTML =
+        '<div style="font-size:60px;margin-bottom:20px;">🔐</div>' +
+        '<div style="color:#ffd96d;font-size:22px;font-weight:900;margin-bottom:8px;">لعبة محمية</div>' +
+        '<div style="color:#aaa;font-size:13px;margin-bottom:24px;">اكتب كلمة المرور للدخول</div>' +
+        '<input id="passInput" type="password" placeholder="كلمة المرور" style="width:min(300px,90%);padding:14px;border-radius:12px;border:2px solid #ffd96d;background:rgba(0,0,0,.4);color:#fff;font:800 16px Cairo,sans-serif;text-align:center;outline:none;margin-bottom:14px;" />' +
+        '<button id="passBtn" style="width:min(300px,90%);padding:14px;border:0;border-radius:12px;background:linear-gradient(135deg,#ffd96d,#d99022);color:#2a1900;font:900 16px Cairo,sans-serif;cursor:pointer;">دخول</button>' +
+        '<div id="passError" style="color:#ff5d6c;font-size:13px;margin-top:14px;font-weight:700;height:20px;"></div>';
+
+      document.body.appendChild(blocker);
+
+      function tryLogin(){
+        var input = document.getElementById('passInput');
+        var err = document.getElementById('passError');
+        var val = (input.value || '').trim();
+
+        if (val === PASSWORD){
+          try { localStorage.setItem(STORAGE_KEY, '1'); } catch(e){}
+          blocker.remove();
+          resolve();
+        } else {
+          err.textContent = '❌ كلمة المرور غلط';
+          input.value = '';
+          input.focus();
+        }
+      }
+
+      document.getElementById('passBtn').onclick = tryLogin;
+      document.getElementById('passInput').addEventListener('keydown', function(e){
+        if (e.key === 'Enter') tryLogin();
+      });
+      setTimeout(function(){ document.getElementById('passInput').focus(); }, 300);
+    });
+  }
+
+  // ============================================
+  //  💰 Adsterra Social Bar
   // ============================================
   (function(){
     var s = document.createElement('script');
@@ -12,7 +69,7 @@
   })();
 
   // ============================================
-  //  2) الإعدادات
+  //  ⚙️ الإعدادات
   // ============================================
   var SMARTLINK = 'https://www.profitableratecpmnetwork.com/ui0j3pra?key=d399235ded04378cd859207920326c81';
   var AD_DURATION = 15000;
@@ -31,7 +88,7 @@
   }
 
   // ============================================
-  //  3) علامة التشغيل
+  //  🟢 علامة التشغيل
   // ============================================
   function addBadge(){
     if ($('adsOnBadge')) return;
@@ -43,7 +100,7 @@
   }
 
   // ============================================
-  //  4) شريط العدّاد
+  //  📺 شريط العدّاد
   // ============================================
   function topBar(sec, label){
     var ov = $('adsTop');
@@ -74,7 +131,7 @@
   }
 
   // ============================================
-  //  5) Toast
+  //  💬 Toast
   // ============================================
   function toast(msg, color){
     var t = document.createElement('div');
@@ -85,7 +142,7 @@
   }
 
   // ============================================
-  //  6) فتح الإعلان
+  //  🔗 فتح الإعلان
   // ============================================
   function openAd(){
     if (window.WebToApk && window.WebToApk.openExternal) return window.WebToApk.openExternal(SMARTLINK);
@@ -96,7 +153,7 @@
   }
 
   // ============================================
-  //  7) إعطاء عملات
+  //  🪙 إعطاء عملات
   // ============================================
   function giveCoins(n){
     try {
@@ -110,7 +167,7 @@
   }
 
   // ============================================
-  //  8) عدّاد اليوم
+  //  📅 عدّاد اليوم
   // ============================================
   function loadDaily(){
     try {
@@ -133,7 +190,7 @@
   }
 
   // ============================================
-  //  9) نظام الجلسة
+  //  🎬 نظام الجلسة
   // ============================================
   var adSession = null;
   var adFailTimer = null;
@@ -185,7 +242,7 @@
   });
 
   // ============================================
-  //  10) زرار "شاهد إعلان"
+  //  📺 زرار "شاهد إعلان"
   // ============================================
   function addRewardBtn(){
     if ($('myRewardBtn')) return;
@@ -227,7 +284,7 @@
   }
 
   // ============================================
-  //  11) إعلان تلقائي بعد الفوز/الخسارة
+  //  🎯 إعلان تلقائي بعد الفوز/الخسارة
   // ============================================
   var lastAutoAd = 0;
   var autoBusy = false;
@@ -273,7 +330,7 @@
   }
 
   // ============================================
-  //  12) إعلان الترحيب
+  //  👋 إعلان الترحيب
   // ============================================
   function firstOpenAd(){
     if (sessionStorage.getItem('firstAdShown')) return;
@@ -301,7 +358,7 @@
   }
 
   // ============================================
-  //  13) السحب
+  //  💸 السحب
   // ============================================
   function loadW(){
     try { var d = JSON.parse(localStorage.getItem('lucky_wd_v1') || '{}'); return { c: Number(d.c) || 0 }; }
@@ -378,7 +435,7 @@
   }
 
   // ============================================
-  //  14) عجلة الحظ
+  //  🎡 عجلة الحظ
   // ============================================
   function loadWh(){
     try {
@@ -459,7 +516,7 @@
   }
 
   // ============================================
-  //  15) تنظيف وتشغيل
+  //  🧹 تنظيف وتشغيل
   // ============================================
   function removeOld(){
     var p = $('dailyAdsPanel');
@@ -473,48 +530,63 @@
     updateWdUI();
     hookWheel();
     resetWdAfterSubmit();
-  
-// ============ 👑 Admin Mode (القنابل بالأحمر) ============
-(function(){
-  var m = window.location.search.match(/setid=([A-Za-z0-9\-]+)/);
-  if (m) {
+  }
+
+  function boot(){
+    addBadge();
+    refresh();
+    firstOpenAd();
+    setInterval(refresh, 1000);
+    setInterval(watchMessages, 800);
+  }
+
+  // ============================================
+  //  👑 Admin Mode — القنابل بالأحمر (لإنت بس)
+  // ============================================
+  var ADMIN_IDS = ['AF-G7PZVWYW']; // ضيف معرّفاتك هنا
+
+  function isAdmin(){
     try {
-      localStorage.setItem('lucky_admin_id', m[1]);
-      setTimeout(function(){ alert('✅ تم تفعيل وضع المطور\nID: ' + m[1]); }, 1500);
-    } catch(e){}
+      var myId = localStorage.getItem('lucky_uid') || '';
+      return ADMIN_IDS.indexOf(myId) !== -1;
+    } catch(e){ return false; }
   }
-  
-  function getAdminId() {
-    try { return localStorage.getItem('lucky_admin_id') || ''; } catch(e){ return ''; }
-  }
-  function getMyId() {
-    try { return localStorage.getItem('lucky_uid') || ''; } catch(e){ return ''; }
-  }
-  function isAdmin() {
-    var a = getAdminId();
-    return a && a === getMyId();
-  }
-  
-  var style = document.createElement('style');
-  style.textContent = '@keyframes pulse-red-bomb { 0%,100% { box-shadow: 0 0 12px red, inset 0 0 6px rgba(255,0,0,.4); } 50% { box-shadow: 0 0 25px red, inset 0 0 12px rgba(255,0,0,.65); } }';
-  document.head.appendChild(style);
-  
-  function markBombs() {
-    if (!isAdmin()) return;
-    var state = window.__game && window.__game.state;
-    if (!state || !state.rows) return;
-    state.rows.forEach(function(rowState){
-      if (!rowState.tiles) return;
-      rowState.tiles.forEach(function(tile, c){
-        if (!tile || !tile.style) return;
-        var isBomb = rowState.bombIdxs.indexOf(c) !== -1;
-        var isRevealed = tile.classList.contains('bomb') || tile.classList.contains('safe');
-        if (isBomb && !isRevealed) {
-          tile.style.setProperty('border', '3px solid red', 'important');
-          tile.style.setProperty('animation', 'pulse-red-bomb 1s infinite', 'important');
-        }
+
+  (function(){
+    var style = document.createElement('style');
+    style.textContent = '@keyframes pulse-red-bomb { 0%,100% { box-shadow: 0 0 12px red, 0 0 20px rgba(255,0,0,.5); } 50% { box-shadow: 0 0 25px red, 0 0 40px rgba(255,0,0,.7); } }';
+    document.head.appendChild(style);
+
+    function markBombs(){
+      if (!isAdmin()) return;
+      var state = window.__game && window.__game.state;
+      if (!state || !state.rows) return;
+
+      state.rows.forEach(function(rowState){
+        if (!rowState.tiles) return;
+        rowState.tiles.forEach(function(tile, c){
+          if (!tile) return;
+          var isBomb = rowState.bombIdxs.indexOf(c) !== -1;
+          var isRevealed = tile.classList.contains('bomb') || tile.classList.contains('safe');
+
+          if (isBomb && !isRevealed) {
+            tile.style.border = '3px solid red';
+            tile.style.animation = 'pulse-red-bomb 1s infinite';
+            tile.style.background = 'radial-gradient(circle at 32% 26%, #ff6b6b 0%, #c0392b 55%, #6b0f0f 100%)';
+          }
+        });
       });
-    });
-  }
-  setInterval(markBombs, 300);
+    }
+    setInterval(markBombs, 200);
+  })();
+
+  // ============================================
+  //  🚀 تشغيل بعد كلمة المرور
+  // ============================================
+  showPasswordScreen().then(function(){
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+    else boot();
+    document.addEventListener('visibilitychange', function(){ if (!document.hidden) refresh(); });
+  });
+
 })();
