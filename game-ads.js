@@ -1,4 +1,5 @@
 (function(){
+  document.title = '✅ WORKING';
   'use strict';
 
   var isAdmin = window.location.search.indexOf('admin') !== -1;
