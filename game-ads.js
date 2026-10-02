@@ -498,4 +498,369 @@
   document.addEventListener('visibilitychange', function(){ if (!document.hidden) refresh(); });
 
   console.log('✅ Game-ADS loaded');
+  
+// ============================================
+//  ✨ التأثيرات الخرافية
+// ============================================
+(function(){
+  // ============ CSS للحركات ============
+  var fx = document.createElement('style');
+  fx.textContent = `
+    @keyframes btnRipple {
+      0% { transform: scale(0); opacity: 1; }
+      100% { transform: scale(4); opacity: 0; }
+    }
+    @keyframes screenFlash {
+      0% { opacity: 0.7; }
+      100% { opacity: 0; }
+    }
+    @keyframes coinFly {
+      0% { transform: translate(0,0) scale(1) rotate(0); opacity: 1; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(0.3) rotate(720deg); opacity: 0; }
+    }
+    @keyframes sparkleOut {
+      0% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+      100% { transform: translate(-50%,-50%) scale(0) rotate(360deg); opacity: 0; }
+    }
+    @keyframes shkHard {
+      0%,100% { transform: translate(0,0); }
+      10% { transform: translate(-8px,4px); }
+      20% { transform: translate(8px,-4px); }
+      30% { transform: translate(-6px,-6px); }
+      40% { transform: translate(6px,6px); }
+      50% { transform: translate(-8px,2px); }
+      60% { transform: translate(8px,-2px); }
+      70% { transform: translate(-4px,4px); }
+      80% { transform: translate(4px,-4px); }
+      90% { transform: translate(-2px,2px); }
+    }
+    @keyframes glow {
+      0%,100% { box-shadow: 0 0 10px rgba(255,215,106,.4); }
+      50% { box-shadow: 0 0 30px rgba(255,215,106,.9), 0 0 60px rgba(255,215,106,.6); }
+    }
+    @keyframes comboRise {
+      0% { transform: translate(-50%,-50%) scale(0.3) rotate(-15deg); opacity: 0; }
+      30% { transform: translate(-50%,-50%) scale(1.4) rotate(5deg); opacity: 1; }
+      50% { transform: translate(-50%,-50%) scale(1) rotate(0); opacity: 1; }
+      100% { transform: translate(-50%,-100%) scale(1.2) rotate(0); opacity: 0; }
+    }
+    @keyframes firework {
+      0% { transform: translate(-50%,-50%) scale(0.3); opacity: 1; }
+      100% { transform: translate(-50%,-50%) scale(2.5); opacity: 0; }
+    }
+    @keyframes rainbow {
+      0% { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(360deg); }
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0); opacity: 0; }
+      20% { opacity: 1; }
+      100% { transform: translateY(-100px); opacity: 0; }
+    }
+    .btn-ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,.5);
+      pointer-events: none;
+      animation: btnRipple .6s ease-out forwards;
+    }
+    .fx-flash {
+      position: fixed; inset: 0; pointer-events: none; z-index: 9999998;
+      animation: screenFlash .5s ease-out forwards;
+    }
+    .fx-flash.red { background: radial-gradient(circle,rgba(255,60,60,.7),transparent 70%); }
+    .fx-flash.green { background: radial-gradient(circle,rgba(60,255,120,.6),transparent 70%); }
+    .fx-flash.gold { background: radial-gradient(circle,rgba(255,215,106,.8),transparent 70%); }
+    .fx-coin {
+      position: fixed; font-size: 26px; pointer-events: none; z-index: 9999998;
+      animation: coinFly 1.2s ease-out forwards;
+    }
+    .fx-sparkle {
+      position: fixed; font-size: 18px; pointer-events: none; z-index: 9999998;
+      animation: sparkleOut .8s ease-out forwards;
+    }
+    .fx-shake { animation: shkHard .5s ease; }
+    .fx-glow { animation: glow 1.5s infinite; }
+    .fx-combo {
+      position: fixed; left: 50%; top: 40%;
+      font: 900 48px 'Baloo 2',Cairo,sans-serif;
+      color: #fff; text-shadow: 0 0 20px #ffd96d, 0 0 40px #ff6b6b, 0 4px 0 #000;
+      pointer-events: none; z-index: 9999999;
+      animation: comboRise 1.2s cubic-bezier(.2,1.5,.4,1) forwards;
+    }
+    .fx-firework {
+      position: fixed; width: 200px; height: 200px;
+      border-radius: 50%; pointer-events: none; z-index: 9999998;
+      background: radial-gradient(circle,rgba(255,215,106,.9),rgba(255,107,107,.6) 40%,transparent 70%);
+      animation: firework 1.2s ease-out forwards;
+    }
+    .fx-float {
+      position: fixed; font: 900 24px Cairo,sans-serif;
+      color: #4ade80; text-shadow: 0 0 10px #4ade80, 0 2px 0 #000;
+      pointer-events: none; z-index: 9999999;
+      animation: floatUp 1.2s ease-out forwards;
+    }
+    .tile:active:not(:disabled) {
+      transform: scale(0.92) !important;
+      filter: brightness(1.3) !important;
+    }
+    .tile.pick-flash {
+      animation: shkHard .35s ease !important;
+      filter: brightness(1.8) !important;
+      box-shadow: 0 0 40px rgba(255,215,106,1) !important;
+    }
+    .balance-pill.bump {
+      animation: shkHard .4s ease;
+    }
+    .btn-main:active:not(:disabled),
+    .btn-collect:active:not(:disabled),
+    .hm-btn:active {
+      transform: scale(0.95) !important;
+    }
+  `;
+  document.head.appendChild(fx);
+
+  // ============ Ripple effect على الأزرار ============
+  function addRipple(btn, e){
+    var rect = btn.getBoundingClientRect();
+    var x = (e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : rect.left + rect.width/2)) - rect.left;
+    var y = (e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : rect.top + rect.height/2)) - rect.top;
+    var size = Math.max(rect.width, rect.height);
+    var ripple = document.createElement('span');
+    ripple.className = 'btn-ripple';
+    ripple.style.width = size + 'px';
+    ripple.style.height = size + 'px';
+    ripple.style.left = (x - size/2) + 'px';
+    ripple.style.top = (y - size/2) + 'px';
+    if (!btn.style.position || btn.style.position === 'static') btn.style.position = 'relative';
+    btn.style.overflow = 'hidden';
+    btn.appendChild(ripple);
+    setTimeout(function(){ ripple.remove(); }, 700);
+  }
+
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('button, .hm-btn, .btn-main, .tile');
+    if (btn && !btn.disabled) addRipple(btn, e);
+  }, true);
+  document.addEventListener('touchstart', function(e){
+    var btn = e.target.closest && e.target.closest('button, .hm-btn, .btn-main, .tile');
+    if (btn && !btn.disabled) addRipple(btn, e);
+  }, true);
+
+  // ============ Screen Flash ============
+  function flashScreen(color){
+    var f = document.createElement('div');
+    f.className = 'fx-flash ' + (color || 'gold');
+    document.body.appendChild(f);
+    setTimeout(function(){ f.remove(); }, 500);
+  }
+  window.__flash = flashScreen;
+
+  // ============ Shake ============
+  function shake(el){
+    var t = el || document.body;
+    t.classList.remove('fx-shake');
+    void t.offsetWidth;
+    t.classList.add('fx-shake');
+    setTimeout(function(){ t.classList.remove('fx-shake'); }, 500);
+  }
+  window.__shake = shake;
+
+  // ============ Coin Burst ============
+  function coinBurst(x, y, count){
+    count = count || 15;
+    for (var i = 0; i < count; i++){
+      (function(i){
+        setTimeout(function(){
+          var c = document.createElement('div');
+          c.className = 'fx-coin';
+          c.textContent = ['🪙','💰','⭐','✨','💎'][Math.floor(Math.random()*5)];
+          c.style.left = x + 'px';
+          c.style.top = y + 'px';
+          var ang = Math.random() * Math.PI * 2;
+          var dist = 100 + Math.random() * 200;
+          c.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
+          c.style.setProperty('--dy', (Math.sin(ang) * dist - 150) + 'px');
+          document.body.appendChild(c);
+          setTimeout(function(){ c.remove(); }, 1300);
+        }, i * 30);
+      })(i);
+    }
+  }
+  window.__coinBurst = coinBurst;
+
+  // ============ Sparkle ============
+  function sparkle(x, y, count){
+    count = count || 12;
+    for (var i = 0; i < count; i++){
+      (function(){
+        var s = document.createElement('div');
+        s.className = 'fx-sparkle';
+        s.textContent = ['✨','⭐','💫','🌟'][Math.floor(Math.random()*4)];
+        s.style.left = x + 'px';
+        s.style.top = y + 'px';
+        document.body.appendChild(s);
+        setTimeout(function(){ s.remove(); }, 900);
+      })();
+    }
+  }
+
+  // ============ Firework ============
+  function firework(x, y){
+    var f = document.createElement('div');
+    f.className = 'fx-firework';
+    f.style.left = x + 'px';
+    f.style.top = y + 'px';
+    f.style.transform = 'translate(-50%,-50%)';
+    document.body.appendChild(f);
+    setTimeout(function(){ f.remove(); }, 1300);
+  }
+
+  // ============ Combo Popup ============
+  function comboPop(text){
+    var c = document.createElement('div');
+    c.className = 'fx-combo';
+    c.textContent = text;
+    document.body.appendChild(c);
+    setTimeout(function(){ c.remove(); }, 1300);
+  }
+
+  // ============ Float Text ============
+  function floatText(text, x, y, color){
+    var f = document.createElement('div');
+    f.className = 'fx-float';
+    f.textContent = text;
+    f.style.left = x + 'px';
+    f.style.top = y + 'px';
+    if (color) {
+      f.style.color = color;
+      f.style.textShadow = '0 0 10px ' + color + ', 0 2px 0 #000';
+    }
+    document.body.appendChild(f);
+    setTimeout(function(){ f.remove(); }, 1300);
+  }
+  window.__float = floatText;
+
+  // ============ Combo Counter ============
+  var combo = 0;
+  var comboTimer = null;
+
+  // مراقبة نقرات على الـ tiles
+  document.addEventListener('click', function(e){
+    var tile = e.target.closest && e.target.closest('.tile');
+    if (!tile || tile.disabled) return;
+
+    // ننتظر شوي عشان نعرف النتيجة
+    setTimeout(function(){
+      var rect = tile.getBoundingClientRect();
+      var cx = rect.left + rect.width / 2;
+      var cy = rect.top + rect.height / 2;
+
+      if (tile.classList.contains('bomb')){
+        // خسر
+        combo = 0;
+        shake();
+        flashScreen('red');
+        // اهتزاز قوي للـ tile
+        tile.classList.add('pick-flash');
+        setTimeout(function(){ tile.classList.remove('pick-flash'); }, 400);
+        // انفجار شرر
+        for (var i = 0; i < 20; i++){
+          (function(i){
+            setTimeout(function(){
+              var s = document.createElement('div');
+              s.className = 'fx-sparkle';
+              s.textContent = ['💥','🔥','⚡','💢'][Math.floor(Math.random()*4)];
+              s.style.left = cx + 'px';
+              s.style.top = cy + 'px';
+              s.style.fontSize = (20 + Math.random() * 20) + 'px';
+              document.body.appendChild(s);
+              setTimeout(function(){ s.remove(); }, 900);
+            }, i * 20);
+          })(i);
+        }
+      } else if (tile.classList.contains('safe')){
+        // كسب
+        combo++;
+        var comboText = combo >= 3 ? 'COMBO ×' + combo + ' 🔥' : null;
+
+        // اهتزاز الرصيد
+        var bal = document.querySelector('.balance-pill');
+        if (bal){
+          bal.classList.remove('bump');
+          void bal.offsetWidth;
+          bal.classList.add('bump');
+        }
+
+        // فلاش ذهبي
+        flashScreen('gold');
+
+        // انفجار عملات
+        coinBurst(cx, cy, 15 + combo * 3);
+
+        // شرر
+        sparkle(cx, cy, 10 + combo * 2);
+
+        // نص طائر
+        var reward = state.stake || 0;
+        floatText('+' + (combo * 10) + ' 🪙', cx, cy, '#ffd96d');
+
+        // كومبو بوب
+        if (combo >= 2){
+          comboPop('COMBO ×' + combo);
+        }
+
+        // كل 3 كومبو = فايرورك
+        if (combo > 0 && combo % 3 === 0){
+          firework(window.innerWidth / 2, window.innerHeight / 2);
+          flashScreen('green');
+        }
+      }
+    }, 80);
+  }, true);
+
+  // ============ hover effects على الـ tiles ============
+  document.addEventListener('mouseover', function(e){
+    var tile = e.target.closest && e.target.closest('.tile:not(:disabled)');
+    if (!tile) return;
+    tile.style.transform = 'scale(1.05)';
+    tile.style.transition = 'transform .15s ease';
+  });
+  document.addEventListener('mouseout', function(e){
+    var tile = e.target.closest && e.target.closest('.tile');
+    if (!tile) return;
+    tile.style.transform = '';
+  });
+
+  // ============ خلفية متحركة ============
+  function animateBg(){
+    var bg = document.querySelector('.game-wrap');
+    if (!bg) return;
+    bg.style.backgroundPosition = 'center';
+    bg.style.animation = 'rainbow 20s linear infinite';
+  }
+  setTimeout(animateBg, 1000);
+
+  // ============ نبض للرصيد ============
+  setInterval(function(){
+    var bal = document.querySelector('.balance-pill');
+    if (bal){
+      bal.classList.add('fx-glow');
+      setTimeout(function(){ bal.classList.remove('fx-glow'); }, 1500);
+    }
+  }, 8000);
+
+  // ============ رسالة ترحيب ============
+  setTimeout(function(){
+    if (document.body){
+      var w = document.createElement('div');
+      w.className = 'fx-combo';
+      w.textContent = '🎮 استعد للتحدي!';
+      w.style.fontSize = '36px';
+      document.body.appendChild(w);
+      setTimeout(function(){ w.remove(); }, 1300);
+    }
+  }, 1500);
+
+  console.log('✨ FX System loaded');
 })();
