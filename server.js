@@ -155,7 +155,7 @@ app.post('/api/best', auth, async (req, res) => {
   }
 });
 
-const PACKAGES = { 35: { coins: 10000 }, 100: { coins: 25000 }, 220: { coins: 50000 } };
+const PACKAGES = { 35: { coins: 20000 }, 100: { coins: 50000 }, 220: { coins: 100000 } };
 
 app.post('/api/withdraw', auth, async (req, res) => {
   try {
